@@ -519,7 +519,7 @@
     </div>
 
     <div class="mb-3">
-      <input type="text" id="searchLetterInput" oninput="renderDirectoryList()" placeholder="Cari penerima, pengirim, atau isi..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-current/15 text-base sm:text-xs focus:outline-none" />
+      <input type="text" id="searchLetterInput" oninput="renderDirectoryList()" placeholder="Cari penerima, pengirim, atau isi (surat terbuka)..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-current/15 text-base sm:text-xs focus:outline-none" />
     </div>
 
     <div id="directoryListContainer" class="max-h-56 sm:max-h-60 overflow-y-auto space-y-1.5 pr-1">
@@ -1653,6 +1653,7 @@
         const diff = (letter.unlockAt || 0) - now;
         if (diff <= 0) {
           renderAllEnvelopesOnCanvas();
+          renderDirectoryList();
         } else {
           badgeSpan.textContent = formatCountdownString(letter.unlockAt);
         }
@@ -2178,7 +2179,7 @@
     };
 
     /***************************************************************************
-     * 10. DIRECTORY DRAWER (JUMP SMOOTHLY TO ANY LETTER ON INFINITE CANVAS)
+     * 10. DIRECTORY DRAWER (SEALED LETTERS ONLY SEARCHABLE BY OUTER TO/FROM)
      ***************************************************************************/
     window.toggleDirectoryDrawer = function () {
       const drawer = document.getElementById("directoryDrawer");
@@ -2193,12 +2194,23 @@
       const query = (document.getElementById("searchLetterInput")?.value || "").toLowerCase().trim();
       if (!listEl) return;
 
+      const now = Date.now();
       const filtered = letters.filter((l) => {
         if (!query) return true;
-        return (
+        const isLocked = (l.unlockAt || 0) > now;
+        const matchOuter =
           (l.to || "").toLowerCase().includes(query) ||
-          (l.from || "").toLowerCase().includes(query) ||
-          (l.body || "").toLowerCase().includes(query)
+          (l.from || "").toLowerCase().includes(query);
+
+        // Sealed letters can ONLY be searched by outer recipient/sender (never body or hidden notes)
+        if (isLocked) {
+          return matchOuter;
+        }
+
+        return (
+          matchOuter ||
+          (l.body || "").toLowerCase().includes(query) ||
+          (l.photoCaption || "").toLowerCase().includes(query)
         );
       });
 
@@ -2209,7 +2221,7 @@
 
       listEl.innerHTML = filtered
         .map((l) => {
-          const isLocked = (l.unlockAt || 0) > Date.now();
+          const isLocked = (l.unlockAt || 0) > now;
           const statusLabel = isLocked ? `⏳ ${formatCountdownString(l.unlockAt)}` : "✦ Siap Dibuka";
           const hasPhoto = Boolean(l.photoUrl && l.photoUrl.trim());
           return `
