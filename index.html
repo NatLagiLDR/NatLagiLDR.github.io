@@ -932,7 +932,7 @@
 
     // Local Preferences (Wall Title & Light/Dark Ambience)
     let localPrefs = {
-      wallTitle: "Kapsul Waktu Kita",
+      wallTitle: "Kapsul Waktu",
       wallTheme: "light"
     };
 
@@ -1121,7 +1121,7 @@
     function renderWallTitleUI() {
       const textEl = document.getElementById("wallTitleText");
       if (textEl) {
-        textEl.textContent = localPrefs.wallTitle || "Kapsul Waktu Kita";
+        textEl.textContent = localPrefs.wallTitle || "Kapsul Waktu";
       }
     }
 
@@ -1130,7 +1130,7 @@
       const inputEl = document.getElementById("wallTitleInput");
       if (!displayBtn || !inputEl) return;
 
-      inputEl.value = localPrefs.wallTitle || "Kapsul Waktu Kita";
+      inputEl.value = localPrefs.wallTitle || "Kapsul Waktu";
       displayBtn.classList.add("hidden");
       inputEl.classList.remove("hidden");
       inputEl.focus();
@@ -1142,7 +1142,7 @@
       const inputEl = document.getElementById("wallTitleInput");
       if (!displayBtn || !inputEl || inputEl.classList.contains("hidden")) return;
 
-      const cleaned = inputEl.value.trim() || "Kapsul Waktu Kita";
+      const cleaned = inputEl.value.trim() || "Kapsul Waktu";
       localPrefs.wallTitle = cleaned;
       saveLocalPrefs();
       renderWallTitleUI();
@@ -1164,7 +1164,7 @@
           e.preventDefault();
           commitWallTitleEdit();
         } else if (e.key === "Escape") {
-          wallTitleInputEl.value = localPrefs.wallTitle || "Kapsul Waktu Kita";
+          wallTitleInputEl.value = localPrefs.wallTitle || "Kapsul Waktu";
           wallTitleInputEl.classList.add("hidden");
           document.getElementById("wallTitleDisplayBtn").classList.remove("hidden");
         }
