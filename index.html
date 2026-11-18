@@ -622,7 +622,7 @@
               </div>
               <div>
                 <label class="block text-[11px] opacity-75 mb-0.5">Catatan Rahasia di Balik Foto (Bisa dibalik 3D)</label>
-                <textarea id="photoBackNoteInput" rows="2" maxlength="180" placeholder="Tulis pesan rahasia di bagian belakang kertas foto..." class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none resize-none"></textarea>
+                <textarea id="photoBackNoteInput" rows="2" maxlength="600" placeholder="Tulis pesan rahasia di bagian belakang kertas foto..." class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none resize-none"></textarea>
               </div>
             </div>
           </div>
@@ -657,10 +657,13 @@
             <input type="datetime-local" id="composeUnlockAt" onchange="renderComposeEnvelopePreview()" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs font-mono focus:outline-none" />
           </div>
 
-          <!-- Letter Body Textarea -->
+          <!-- Letter Body Textarea (Unlimited Length) -->
           <div class="flex-1 flex flex-col">
-            <label class="block text-xs font-medium mb-1">Isi Surat *</label>
-            <textarea id="composeBody" rows="6" required placeholder="Tuliskan seluruh ceritamu, rindumu, atau harapan untuk hari saat surat ini dibuka..." class="w-full flex-1 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 font-serif text-base sm:text-lg leading-relaxed focus:outline-none resize-none"></textarea>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-medium">Isi Surat *</label>
+              <span id="composeCharCounter" class="text-[11px] font-mono opacity-55">0 karakter</span>
+            </div>
+            <textarea id="composeBody" rows="6" required oninput="updateComposeCharCounter()" placeholder="Tuliskan seluruh ceritamu, rindumu, atau harapan untuk hari saat surat ini dibuka..." class="w-full flex-1 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 font-serif text-base sm:text-lg leading-relaxed focus:outline-none resize-y min-h-[150px]"></textarea>
           </div>
 
           <!-- Submit Row -->
@@ -681,7 +684,7 @@
   <!-- ========================================================================= -->
   <!-- MODAL 3: 3D WAX UNSEALING STAGE & FULL LETTER / POLAROID READING TABLE    -->
   <!-- ========================================================================= -->
-  <div id="readingStageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-[#141210]/90 backdrop-blur-md p-3 sm:p-6 overflow-y-auto">
+  <div id="readingStageModal" class="fixed inset-0 z-50 hidden items-start sm:items-center justify-center bg-[#141210]/90 backdrop-blur-md p-3 sm:p-6 overflow-y-auto">
     
     <!-- STEP 1: 3D SEALED ENVELOPE BACK & RISING LETTER ANIMATION -->
     <div id="stageSealedView" class="flex flex-col items-center justify-center my-auto w-full max-w-lg py-6">
@@ -773,7 +776,7 @@
         </div>
 
         <!-- Attached Polaroid Column (3D Flip Front Photo <-> Back Secret Note) -->
-        <div id="tablePhotoColumn" class="hidden w-full max-w-[300px] flex flex-col items-center justify-center shrink-0">
+        <div id="tablePhotoColumn" class="hidden w-full max-w-[300px] flex flex-col items-center justify-center shrink-0 lg:sticky lg:top-6 lg:self-start">
           <div class="polaroid-flip-scene w-[264px] sm:w-[272px] h-[330px] sm:h-[340px] cursor-pointer" onclick="toggleFlipPolaroid()" title="Ketuk foto untuk membalik dan membaca catatan di belakangnya">
             <div id="polaroidFlipInner" class="polaroid-flip-inner">
               
@@ -792,11 +795,11 @@
               </div>
 
               <!-- Back Face: Secret Handwritten Note on Back of Photo -->
-              <div class="polaroid-face-back bg-[#F2ECE1] text-[#231F1D] p-6 rounded-[4px] shadow-2xl border border-black/15 paper-grain flex flex-col justify-between">
+              <div class="polaroid-face-back bg-[#F2ECE1] text-[#231F1D] p-5 rounded-[4px] shadow-2xl border border-black/15 paper-grain flex flex-col justify-between">
                 <div class="text-[10px] font-mono uppercase tracking-widest opacity-45 border-b border-black/10 pb-2">
                   Catatan di Balik Foto
                 </div>
-                <p id="tablePhotoBackNote" class="font-hand text-2xl leading-snug text-center my-auto whitespace-pre-line text-[#2B221E]"></p>
+                <div class="my-auto max-h-[210px] overflow-y-auto px-1 flex items-center justify-center"><p id="tablePhotoBackNote" class="font-hand text-xl sm:text-2xl leading-snug text-center whitespace-pre-line text-[#2B221E]"></p></div>
                 <div class="text-center text-[10px] font-mono opacity-45 pt-2 border-t border-black/10">
                   Ketuk lagi untuk melihat foto ↺
                 </div>
@@ -2023,11 +2026,20 @@
       return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}T${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
     }
 
+    window.updateComposeCharCounter = function () {
+      const bodyEl = document.getElementById("composeBody");
+      const counterEl = document.getElementById("composeCharCounter");
+      if (!bodyEl || !counterEl) return;
+      const len = bodyEl.value.length;
+      counterEl.textContent = `${len.toLocaleString("id-ID")} karakter`;
+    };
+
     window.openComposeModal = function () {
       composeMotifIndex = Math.floor(Math.random() * 50);
       clearSelectedPhoto();
 
       document.getElementById("composeUnlockAt").value = "";
+      updateComposeCharCounter();
 
       const modal = document.getElementById("composeModal");
       modal.classList.remove("hidden");
@@ -2171,6 +2183,7 @@
       };
 
       document.getElementById("composeBody").value = "";
+      updateComposeCharCounter();
       closeComposeModal();
 
       await saveLetterToCloud(newLetter);
