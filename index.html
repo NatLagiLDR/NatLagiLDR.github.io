@@ -1,0 +1,3419 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Kapsul Waktu — Ruang Surat Kita</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            galleryLight: '#F3EFE6',
+            galleryDark: '#161514',
+            espresso: '#231F1D',
+            waxRed: '#7E2622',
+            brass: '#B8955A',
+            linen: '#FAF6EE'
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            hand: ['"Caveat"', 'cursive'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    input, textarea, pre, code {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: background-color 0.45s ease, color 0.45s ease;
+    }
+
+    /* Warm Museum Gallery Wall (Default Light) */
+    body.wall-light {
+      background-color: #F3EFE6;
+      color: #231F1D;
+      --wire-main: rgba(112, 92, 66, 0.30);
+      --wire-sub: rgba(112, 92, 66, 0.22);
+      --wire-highlight: rgba(255, 252, 245, 0.65);
+      --wire-shadow: rgba(45, 34, 22, 0.09);
+      --weld-node: rgba(96, 76, 52, 0.48);
+      --wall-vignette: radial-gradient(circle at 50% 35%, rgba(255, 252, 245, 0.55) 0%, rgba(243, 239, 230, 0.2) 55%, rgba(218, 209, 194, 0.65) 100%);
+      --dock-bg: rgba(250, 246, 238, 0.88);
+      --dock-border: rgba(120, 98, 72, 0.22);
+      --dock-text: #231F1D;
+    }
+
+    /* Late Night Reading Wall (Dark Option) */
+    body.wall-dark {
+      background-color: #161514;
+      color: #EDE5D8;
+      --wire-main: rgba(188, 154, 104, 0.24);
+      --wire-sub: rgba(188, 154, 104, 0.17);
+      --wire-highlight: rgba(235, 205, 155, 0.08);
+      --wire-shadow: rgba(0, 0, 0, 0.68);
+      --weld-node: rgba(205, 171, 118, 0.42);
+      --wall-vignette: radial-gradient(circle at 50% 25%, rgba(215, 162, 94, 0.11) 0%, rgba(22, 21, 20, 0.4) 55%, rgba(10, 9, 8, 0.92) 100%);
+      --dock-bg: rgba(28, 25, 23, 0.88);
+      --dock-border: rgba(184, 149, 90, 0.25);
+      --dock-text: #EDE5D8;
+    }
+
+    /* Infinite Wire Grid Viewport */
+    #infiniteViewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #infiniteViewport.is-panning {
+      cursor: grabbing;
+    }
+
+    /* Realistic Intersecting Metallic Wire Mesh */
+    #wireMeshBackground {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        var(--wall-vignette),
+        radial-gradient(circle at center, var(--weld-node) 2px, transparent 2.2px),
+        linear-gradient(to right, var(--wire-main) 1.6px, var(--wire-highlight) 2.6px, transparent 2.6px),
+        linear-gradient(to bottom, var(--wire-main) 1.8px, var(--wire-shadow) 4px, transparent 4px);
+      will-change: background-position, background-size;
+    }
+
+    /* Infinite 2D Coordinate Plane */
+    #worldCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    /* Floating Glass/Linen Dock */
+    .tactile-dock {
+      background: var(--dock-bg);
+      border: 1px solid var(--dock-border);
+      color: var(--dock-text);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    /* Physical Envelope Card on Wire Grid */
+    .envelope-card {
+      position: absolute;
+      width: 276px;
+      height: 184px;
+      transform-origin: 50% -10px;
+      transition: box-shadow 0.28s ease, filter 0.28s ease;
+      will-change: transform, left, top;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    .envelope-card:active {
+      cursor: grabbing;
+    }
+
+    .envelope-card.dragging {
+      z-index: 9999 !important;
+      filter: drop-shadow(0 26px 32px rgba(0, 0, 0, 0.36));
+    }
+
+    @keyframes gentleSwing {
+      0% { transform: rotate(var(--swing-start, 5deg)); }
+      35% { transform: rotate(-3.2deg); }
+      65% { transform: rotate(1.8deg); }
+      100% { transform: rotate(var(--resting-tilt, 0deg)); }
+    }
+
+    .envelope-swing {
+      animation: gentleSwing 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes lockedTremble {
+      0%, 100% { transform: translateX(0) rotate(var(--resting-tilt, 0deg)); }
+      20% { transform: translateX(-6px) rotate(-2.5deg); }
+      40% { transform: translateX(6px) rotate(2.5deg); }
+      60% { transform: translateX(-4px) rotate(-1.2deg); }
+      80% { transform: translateX(4px) rotate(1.2deg); }
+    }
+
+    .locked-shake {
+      animation: lockedTremble 0.42s ease-in-out;
+    }
+
+    /* Subtle Paper & Linen Grain */
+    .paper-grain {
+      background-image:
+        radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 0),
+        radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+      background-size: 16px 16px;
+      background-position: 0 0, 8px 8px;
+    }
+
+    /* Classic Airmail Border Option */
+    .airmail-edge {
+      background: repeating-linear-gradient(
+        -45deg,
+        #7E2622,
+        #7E2622 6px,
+        transparent 6px,
+        transparent 12px,
+        #263E59 12px,
+        #263E59 18px,
+        transparent 18px,
+        transparent 24px
+      );
+      padding: 4px;
+    }
+
+    /* Perforated Postage Stamp Edge */
+    .postage-stamp {
+      position: relative;
+      background-image: radial-gradient(transparent 2.5px, rgba(255,255,255,0.85) 2.7px);
+      background-size: 8px 8px;
+      background-position: -4px -4px;
+      padding: 3px;
+    }
+
+    /* 3D Envelope Opening Stage */
+    .perspective-stage {
+      perspective: 1500px;
+    }
+
+    .envelope-3d-stage {
+      position: relative;
+      width: 420px;
+      height: 276px;
+      transform-style: preserve-3d;
+      transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @media (max-width: 500px) {
+      .envelope-3d-stage {
+        width: 310px;
+        height: 206px;
+      }
+    }
+
+    /* Top Flap on the Back of Envelope */
+    .flap-3d-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 62%;
+      transform-origin: top center;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      transition: transform 0.85s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.2s step-end;
+      z-index: 35;
+    }
+
+    .flap-3d-top.is-open {
+      transform: rotateX(180deg);
+      z-index: 8;
+    }
+
+    /* Side & Bottom Folded Flaps */
+    .pocket-3d-sides {
+      position: absolute;
+      inset: 0;
+      clip-path: polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%);
+      z-index: 25;
+      pointer-events: none;
+    }
+
+    .pocket-3d-bottom {
+      position: absolute;
+      inset: 0;
+      clip-path: polygon(0 100%, 50% 46%, 100% 100%);
+      z-index: 26;
+      pointer-events: none;
+    }
+
+    /* Sliding Letter Sheet & Tucked Polaroid inside 3D Envelope */
+    .rising-letter-sheet {
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      top: 10%;
+      bottom: 8%;
+      z-index: 15;
+      transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .rising-letter-sheet.slide-up {
+      transform: translateY(-135px) scale(1.02);
+    }
+
+    .rising-polaroid-card {
+      position: absolute;
+      right: 9%;
+      top: 14%;
+      width: 118px;
+      height: 142px;
+      z-index: 16;
+      transform: rotate(4deg);
+      transition: transform 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @media (max-width: 500px) {
+      .rising-letter-sheet.slide-up {
+        transform: translateY(-102px) scale(1.02);
+      }
+      .rising-polaroid-card {
+        width: 92px;
+        height: 112px;
+      }
+      .rising-polaroid-card.slide-up {
+        transform: translateY(-110px) translateX(22px) rotate(10deg);
+      }
+    }
+
+    .rising-polaroid-card.slide-up {
+      transform: translateY(-148px) translateX(34px) rotate(10deg);
+    }
+
+    /* Wax Seal Button */
+    .wax-seal-3d {
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+    }
+
+    .wax-seal-3d.cracked {
+      transform: scale(1.28) rotate(15deg);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* 3D Flip Card for Polaroid Photo (Front Photo <-> Back Secret Note) */
+    .polaroid-flip-scene {
+      perspective: 1200px;
+    }
+
+    .polaroid-flip-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    .polaroid-flip-inner.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .polaroid-face-front,
+    .polaroid-face-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .polaroid-face-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Tactile Envelope Range Slider */
+    input[type="range"].archival-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(126, 38, 34, 0.22);
+      outline: none;
+    }
+
+    input[type="range"].archival-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: #7E2622;
+      border: 2px solid #FAF6EE;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"].archival-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(150, 125, 95, 0.35);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="wall-light h-[100dvh] w-screen overflow-hidden select-none">
+
+  <!-- ========================================================================= -->
+  <!-- INFINITE 2D WIRE GRID VIEWPORT & WORLD PLANE                              -->
+  <!-- ========================================================================= -->
+  <main id="infiniteViewport">
+    <div id="wireMeshBackground"></div>
+    <div id="worldCanvas"></div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- LOCKED TIME CAPSULE TOAST NOTIFICATION                                    -->
+  <!-- ========================================================================= -->
+  <div id="lockedToast" class="fixed top-[calc(4.25rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-40 hidden pointer-events-none w-[92vw] max-w-md">
+    <div class="tactile-dock px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-[#7E2622]/30">
+      <div class="w-8 h-8 rounded-full bg-[#7E2622] text-[#FAF6EE] flex items-center justify-center text-sm shrink-0">⏳</div>
+      <div class="min-w-0">
+        <div class="font-serif italic text-sm font-semibold">Kapsul Waktu Masih Tersegel</div>
+        <div id="lockedToastCountdown" class="text-[11px] font-mono opacity-80 truncate">Menunggu waktu buka...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TOP-LEFT INLINE EDITABLE WALL TITLE & LIVE FIREBASE CONNECTION INDICATOR  -->
+  <!-- ========================================================================= -->
+  <div class="fixed top-[max(0.85rem,env(safe-area-inset-top))] left-3 sm:left-4 z-30 flex items-center gap-2 pointer-events-none max-w-[calc(100vw-6.5rem)]">
+    <div id="wallTitlePill" class="tactile-dock px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-sm flex items-center gap-2 sm:gap-2.5 pointer-events-auto transition group max-w-full">
+      <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.75)] shrink-0" title="Status Sinkronisasi"></span>
+      
+      <!-- Display Mode -->
+      <button type="button" id="wallTitleDisplayBtn" onclick="startEditingWallTitle()" class="flex items-center gap-2 text-left focus:outline-none min-w-0" title="Klik untuk mengubah judul dinding surat">
+        <span id="wallTitleText" class="font-serif text-base sm:text-xl font-medium tracking-wide truncate">Kapsul Waktu</span>
+        <svg class="w-3.5 h-3.5 opacity-45 group-hover:opacity-90 transition shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+        </svg>
+      </button>
+
+      <!-- Inline Edit Mode -->
+      <input type="text" id="wallTitleInput" maxlength="42" class="hidden bg-transparent border-b border-current/40 font-serif text-base sm:text-xl font-medium tracking-wide focus:outline-none w-40 sm:w-60" placeholder="Kapsul Waktu" />
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TOP-RIGHT CONTROLS: BROWSER NOTIFICATION BELL + WALL AMBIENCE TOGGLE      -->
+  <!-- ========================================================================= -->
+  <div class="fixed top-[max(0.85rem,env(safe-area-inset-top))] right-3 sm:right-4 z-30 flex items-center gap-1.5 sm:gap-2 pointer-events-none">
+    <!-- Browser Notification Bell Button -->
+    <button type="button" onclick="toggleNotifPopover()" id="notifBellBtn" class="tactile-dock w-9 h-9 rounded-full shadow-sm flex items-center justify-center pointer-events-auto hover:scale-105 active:scale-95 transition relative" title="Notifikasi Chrome (06:00 & 18:00)">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+      </svg>
+      <span id="notifStatusDot" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500"></span>
+    </button>
+
+    <!-- Light / Dark Theme Toggle -->
+    <button onclick="toggleWallTheme()" id="wallThemeBtn" class="tactile-dock w-9 h-9 rounded-full shadow-sm flex items-center justify-center pointer-events-auto hover:scale-105 active:scale-95 transition" title="Ganti Pencahayaan Dinding (Siang / Malam)">
+      <svg id="iconSunWall" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+      </svg>
+      <svg id="iconMoonWall" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- POPOVER: PENGATURAN NOTIFIKASI BROWSER / CHROME (06:00 & 18:00)           -->
+  <!-- ========================================================================= -->
+  <div id="notifPopover" class="fixed top-[calc(3.6rem+env(safe-area-inset-top))] right-3 sm:right-4 z-40 hidden w-[90vw] max-w-xs tactile-dock rounded-2xl shadow-2xl p-4 border">
+    <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-current/10">
+      <div>
+        <h3 class="font-serif text-base font-semibold">Notifikasi Browser / Chrome</h3>
+        <p class="text-[10px] opacity-65">Pengingat otomatis jam 06:00 pagi &amp; 18:00 sore</p>
+      </div>
+      <button type="button" onclick="toggleNotifPopover()" class="w-7 h-7 rounded-full hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center text-xs">✕</button>
+    </div>
+
+    <div class="space-y-2.5 text-xs">
+      <div id="notifPermissionDesc" class="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-[11px] leading-relaxed opacity-85">
+        Aktifkan izin notifikasi browser agar Chrome memberi kabar tiap jam 06:00 pagi dan 18:00 sore tentang surat baru &amp; surat yang belum dibaca.
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button type="button" id="enableBrowserNotifBtn" onclick="requestBrowserNotifPermission()"
+                class="flex-1 py-2 px-3 rounded-xl bg-[#7E2622] hover:bg-[#691E1B] text-[#FAF6EE] font-medium text-xs transition">
+          Aktifkan Notif
+        </button>
+        <button type="button" onclick="triggerTestBrowserNotification()"
+                class="py-2 px-3 rounded-xl border border-current/20 hover:bg-black/5 dark:hover:bg-white/5 font-medium text-xs transition">
+          Tes Notif
+        </button>
+      </div>
+
+      <p class="text-[10px] opacity-60 leading-snug">
+        Tips HP: Ketuk menu Chrome (⋮) → <strong>Tambahkan ke Layar Utama / Instal Aplikasi</strong> agar notifikasi tampil seperti aplikasi bawaan.
+      </p>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- BOTTOM-LEFT COORDINATE INDICATOR & ORIGIN / NEAREST LETTER NAVIGATION     -->
+  <!-- ========================================================================= -->
+  <div class="fixed bottom-[calc(4.35rem+env(safe-area-inset-bottom))] sm:bottom-4 left-3 sm:left-4 z-30 flex items-center gap-2 pointer-events-none">
+    <div class="tactile-dock px-3 py-1.5 rounded-full text-[11px] font-mono opacity-85 shadow-sm flex items-center gap-2 pointer-events-auto">
+      <button type="button" onclick="glideToOrigin()" id="coordReadout" class="hover:opacity-100 transition" title="Ketuk untuk kembali ke titik pusat (0, 0)">
+        X: 0 · Y: 0
+      </button>
+      <button type="button" id="jumpNearestBtn" onclick="panToNearestLetter()" class="hidden pl-2 border-l border-current/20 text-[#7E2622] dark:text-[#B8955A] font-sans font-medium hover:underline">
+        Ke Surat Terdekat →
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- BOTTOM-CENTER FLOATING ESSENTIAL DOCK                                     -->
+  <!-- ========================================================================= -->
+  <nav class="fixed bottom-[max(0.85rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-30 pointer-events-none w-max max-w-[96vw]">
+    <div class="tactile-dock px-2 py-1.5 rounded-full shadow-xl flex items-center gap-1 sm:gap-1.5 pointer-events-auto">
+      
+      <!-- 1. Tulis Surat (Primary Button) -->
+      <button onclick="openComposeModal()" class="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-full bg-[#7E2622] hover:bg-[#691E1B] text-[#FAF6EE] text-xs sm:text-sm font-medium shadow-sm transition active:scale-95">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+        </svg>
+        <span>Tulis Surat</span>
+      </button>
+
+      <div class="h-4 w-[1px] bg-current opacity-15 mx-0.5"></div>
+
+      <!-- 2. Cari / Daftar Surat Drawer -->
+      <button onclick="toggleDirectoryDrawer()" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-xs font-medium transition" title="Daftar & Cari Surat di Kanvas">
+        <svg class="w-3.5 h-3.5 opacity-75 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <span class="hidden md:inline">Daftar Surat</span>
+      </button>
+
+      <!-- 3. Reset Posisi -->
+      <button onclick="resetCanvasView()" class="flex items-center gap-1 px-2.5 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-xs transition" title="Pusatkan Kamera ke Surat">
+        <svg class="w-3.5 h-3.5 opacity-75 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+        </svg>
+        <span class="hidden lg:inline text-xs">Reset Posisi</span>
+      </button>
+
+      <div class="h-4 w-[1px] bg-current opacity-15 mx-0.5"></div>
+
+      <!-- 4. Zoom Controls (-, 100%, +) -->
+      <div class="flex items-center font-mono text-xs">
+        <button onclick="stepZoom(-0.15)" class="w-7 h-7 sm:w-7 sm:h-7 rounded-full hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center transition" title="Perkecil">−</button>
+        <button onclick="resetZoomOnly()" id="zoomReadout" class="px-1 sm:px-1.5 text-[11px] opacity-80 hover:opacity-100">100%</button>
+        <button onclick="stepZoom(0.15)" class="w-7 h-7 sm:w-7 sm:h-7 rounded-full hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center transition" title="Perbesar">+</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================================================================= -->
+  <!-- DRAWER: CARI / DAFTAR SURAT (Jump smoothly to any letter on infinite wall)-->
+  <!-- ========================================================================= -->
+  <div id="directoryDrawer" class="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 hidden w-[92vw] max-w-md tactile-dock rounded-2xl shadow-2xl p-4 border">
+    <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-current/10">
+      <div>
+        <h3 class="font-serif text-lg font-semibold">Daftar Surat di Dinding</h3>
+        <p class="text-[11px] opacity-65">Ketuk surat untuk menggeser kamera langsung ke posisinya</p>
+      </div>
+      <button onclick="toggleDirectoryDrawer()" class="w-8 h-8 rounded-full hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center text-xs">✕</button>
+    </div>
+
+    <!-- Reader Code Box for Cross-Device Read/Unread History -->
+    <div class="p-2.5 mb-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-current/10">
+      <!-- State A: Code Not Entered Yet -->
+      <div id="readerCodeFormView">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] font-medium opacity-80">🔑 Kode Riwayat Baca (Antar Perangkat)</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <input type="text" id="readerCodeInput" maxlength="24"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();activateReaderCode();}"
+                 placeholder="Masukkan kodemu (misal: NAT01)..."
+                 class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-white/80 dark:bg-black/30 border border-current/15 text-base sm:text-xs font-mono focus:outline-none" />
+          <button type="button" onclick="activateReaderCode()"
+                  class="px-3 py-1.5 rounded-lg bg-[#7E2622] hover:bg-[#691E1B] text-[#FAF6EE] text-xs font-medium shrink-0 transition">
+            Pakai
+          </button>
+        </div>
+        <p class="text-[10px] opacity-60 mt-1">Beda kode = beda riwayat surat yang sudah dibuka &amp; belum dibaca.</p>
+      </div>
+
+      <!-- State B: Active Reader Code & Filter Pills -->
+      <div id="readerCodeActiveView" class="hidden space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <span class="text-[11px] truncate">Kode: <strong id="activeReaderCodeLabel" class="font-mono uppercase"></strong></span>
+            <span id="readStatsSummaryBadge" class="text-[10px] font-mono opacity-70 shrink-0"></span>
+          </div>
+          <button type="button" onclick="clearReaderCode()"
+                  class="text-[10px] underline opacity-70 hover:opacity-100 shrink-0">
+            Ganti Kode
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1 text-[11px]">
+          <button type="button" id="filterTab-all" onclick="setDirectoryReadFilter('all')"
+                  class="flex-1 py-1 px-2 rounded-lg font-medium transition bg-[#7E2622] text-[#FAF6EE]">
+            Semua
+          </button>
+          <button type="button" id="filterTab-unread" onclick="setDirectoryReadFilter('unread')"
+                  class="flex-1 py-1 px-2 rounded-lg font-medium transition hover:bg-black/5 dark:hover:bg-white/10">
+            Belum Dibaca
+          </button>
+          <button type="button" id="filterTab-read" onclick="setDirectoryReadFilter('read')"
+                  class="flex-1 py-1 px-2 rounded-lg font-medium transition hover:bg-black/5 dark:hover:bg-white/10">
+            Sudah Dibaca
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-2.5">
+      <input type="text" id="searchLetterInput" oninput="renderDirectoryList()" placeholder="Cari penerima, pengirim, atau isi (surat terbuka)..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-current/15 text-base sm:text-xs focus:outline-none" />
+    </div>
+
+    <div id="directoryListContainer" class="max-h-52 sm:max-h-56 overflow-y-auto space-y-1.5 pr-1">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: TULIS SURAT BARU (Slider + Swatches + Random + GDrive Upload)    -->
+  <!-- ========================================================================= -->
+  <div id="composeModal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/75 backdrop-blur-md p-0 sm:p-6 overflow-y-auto">
+    <div class="w-full max-w-4xl bg-[#FAF6EE] dark:bg-[#1E1B19] text-[#231F1D] dark:text-[#EDE5D8] border-t sm:border border-black/15 dark:border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92dvh] sm:max-h-[88vh] flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="px-5 sm:px-6 py-3.5 sm:py-4 border-b border-black/10 dark:border-white/10 flex items-center justify-between shrink-0">
+        <div>
+          <h2 class="font-serif text-xl sm:text-2xl font-semibold">Tulis Surat & Kapsul Waktu</h2>
+          <p class="text-[11px] sm:text-xs opacity-65">Pilih gaya amplop favoritmu, selipkan foto jika ingin, lalu gantung di dinding kawat</p>
+        </div>
+        <button onclick="closeComposeModal()" class="w-9 h-9 rounded-full hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center text-sm shrink-0">✕</button>
+      </div>
+
+      <form id="composeForm" onsubmit="submitNewLetter(event)" class="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 overflow-y-auto pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        
+        <!-- LEFT COLUMN: Envelope Style Slider + Swatches + Photo Attachment (5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
+          
+          <!-- Envelope Style Selector (Slider + Visual Swatch Strip + Random Button, No Numbers) -->
+          <div class="p-3.5 sm:p-4 rounded-xl bg-[#EFEAE0] dark:bg-[#151312] border border-black/10 dark:border-white/10 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <span class="block text-[10px] uppercase tracking-wider opacity-55">Jenis Kertas & Segel</span>
+                <span id="composePaperFinishName" class="font-serif italic text-sm font-semibold truncate block">Classic Ivory Cotton</span>
+              </div>
+              <button type="button" onclick="randomizeEnvelopeStyle()" class="px-3 py-1 rounded-full bg-white/85 dark:bg-white/10 hover:bg-white dark:hover:bg-white/15 border border-black/10 dark:border-white/15 text-xs font-medium flex items-center gap-1.5 transition shadow-sm shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                <span>Acak</span>
+              </button>
+            </div>
+
+            <!-- Live Envelope Preview -->
+            <div class="py-1 sm:py-2 flex items-center justify-center overflow-hidden">
+              <div id="composeEnvelopePreview" class="w-[268px] h-[178px] relative scale-[0.92] sm:scale-100 origin-center"></div>
+            </div>
+
+            <!-- Interactive Range Slider with Chevron Buttons -->
+            <div class="flex items-center gap-2 pt-1">
+              <button type="button" onclick="stepEnvelopeStyle(-1)" class="w-8 h-8 rounded-full bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 border border-black/10 dark:border-white/15 flex items-center justify-center text-xs transition shrink-0" title="Amplop Sebelumnya">
+                ‹
+              </button>
+              <input type="range" id="envelopeStyleSlider" min="0" max="49" value="0" oninput="setEnvelopeStyleIndex(this.value)" class="archival-slider flex-1 cursor-pointer" aria-label="Pilih gaya amplop" />
+              <button type="button" onclick="stepEnvelopeStyle(1)" class="w-8 h-8 rounded-full bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 border border-black/10 dark:border-white/15 flex items-center justify-center text-xs transition shrink-0" title="Amplop Berikutnya">
+                ›
+              </button>
+            </div>
+
+            <!-- Horizontally Scrollable Visual Mini-Envelope Swatch Strip (50 Curated Styles) -->
+            <div id="envelopeSwatchStrip" class="flex items-center gap-1.5 overflow-x-auto py-1.5 px-0.5 scroll-smooth">
+              <!-- Populated dynamically with 50 tactile miniature envelope swatches -->
+            </div>
+          </div>
+
+          <!-- Selipkan Foto & Video Kenangan (Maksimal 5 Item per Surat) -->
+          <div class="p-3.5 sm:p-4 rounded-xl bg-[#EFEAE0] dark:bg-[#151312] border border-black/10 dark:border-white/10 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <label class="text-xs font-semibold flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-[#7E2622] dark:text-[#B8955A] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <span>Foto / Klip Video <span id="mediaCountBadge" class="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 dark:bg-white/10 ml-0.5">0/5</span></span>
+              </label>
+              <button type="button" id="clearPhotoBtn" onclick="clearSelectedPhoto()" class="hidden text-[11px] text-red-600 hover:underline shrink-0">Hapus Semua</button>
+            </div>
+
+            <!-- Upload File Controls (Supports up to 5 Photos or Short Videos <= 25MB) -->
+            <div class="flex gap-2">
+              <label id="uploadMediaLabelWrapper" class="flex-1 py-2.5 px-3 rounded-xl bg-white dark:bg-white/5 hover:bg-black/5 border border-black/15 dark:border-white/15 text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span id="uploadBtnLabel">Upload Foto / Klip Video (≤ 25 MB)</span>
+                <input type="file" id="photoFileInput" accept="image/*,video/*" multiple class="hidden" onchange="handleMediaFilesSelect(event)" />
+              </label>
+            </div>
+
+            <!-- Paste Link Controls (Unlimited Video Size via Google Drive / YouTube / MP4 / Photo Link) -->
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-1.5">
+                <div class="flex rounded-lg bg-white/80 dark:bg-black/30 p-0.5 border border-black/15 dark:border-white/15 shrink-0 text-[11px]">
+                  <button type="button" id="linkTypeBtn-video" onclick="setComposeLinkMediaType('video')"
+                          class="px-2 py-1 rounded-md font-medium bg-[#7E2622] text-[#FAF6EE] transition">
+                    🎬 Video
+                  </button>
+                  <button type="button" id="linkTypeBtn-image" onclick="setComposeLinkMediaType('image')"
+                          class="px-2 py-1 rounded-md font-medium opacity-75 hover:opacity-100 transition">
+                    📷 Foto
+                  </button>
+                </div>
+                <input type="text" id="photoDirectUrlInput"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();addMediaFromLinkInput();}"
+                       placeholder="Tempel link Google Drive / YouTube / .mp4..."
+                       class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none" />
+                <button type="button" onclick="addMediaFromLinkInput()"
+                        class="px-2.5 py-1.5 rounded-lg bg-[#231F1D] dark:bg-[#B8955A] text-[#FAF6EE] dark:text-[#161514] text-xs font-medium shrink-0 hover:opacity-90 transition">
+                  + Tambah
+                </button>
+              </div>
+              <p class="text-[10px] opacity-60 leading-snug">
+                Video besar (&gt; 25 MB) tetap tajam 100% jika diunggah ke Google Drive lalu ditempel link berbaginya di sini.
+              </p>
+            </div>
+
+            <!-- Upload Progress / Status -->
+            <div id="photoUploadStatusBox" class="hidden text-[11px] px-2.5 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-between">
+              <span id="photoUploadStatusText">Menyiapkan media...</span>
+            </div>
+
+            <!-- Horizontal Thumbnail Strip for Added Media Items (Up to 5) -->
+            <div id="composeMediaStrip" class="hidden flex items-center gap-2 overflow-x-auto py-1"></div>
+
+            <!-- Per-Item Caption & Secret Back Note (Edits currently selected item in strip) -->
+            <div id="photoExtraFields" class="hidden space-y-2 pt-2 border-t border-black/10 dark:border-white/10">
+              <div class="flex items-center justify-between">
+                <span id="editingMediaItemLabel" class="text-[10px] font-mono uppercase tracking-wider opacity-65">Detail Kartu #1</span>
+              </div>
+              <div>
+                <label class="block text-[11px] opacity-75 mb-0.5">Caption di Depan Polaroid</label>
+                <input type="text" id="photoCaptionInput" maxlength="45" oninput="updateSelectedMediaMeta()" placeholder="Misal: Sore itu di stasiun..." class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] opacity-75 mb-0.5">Catatan Rahasia di Balik Kartu (Bisa dibalik 3D)</label>
+                <textarea id="photoBackNoteInput" rows="2" maxlength="600" oninput="updateSelectedMediaMeta()" placeholder="Tulis pesan rahasia di bagian belakang kartu ini..." class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none resize-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: To, From, Unlock Time & Letter Content (7 Cols) -->
+        <div class="lg:col-span-7 flex flex-col justify-between space-y-4">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium mb-1">To (Pasanganmu) *</label>
+              <input type="text" id="composeTo" required placeholder="Misal: Aruna" oninput="renderComposeEnvelopePreview()" class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-sm focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1">From (Kamu) *</label>
+              <input type="text" id="composeFrom" required placeholder="Misal: Baskara" oninput="renderComposeEnvelopePreview()" class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-sm focus:outline-none" />
+            </div>
+          </div>
+
+          <!-- Time Capsule Unlock Date & Time -->
+          <div class="p-3.5 rounded-xl bg-[#EFEAE0] dark:bg-[#151312] border border-black/10 dark:border-white/10">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label class="text-xs font-semibold">Waktu Buka Kapsul Waktu <span class="font-normal opacity-60">(Kosongkan untuk langsung dibuka)</span></label>
+              <div class="flex flex-wrap gap-1 text-[11px]">
+                <button type="button" onclick="setUnlockOffset(0)" class="px-2 py-1 rounded-md bg-white dark:bg-white/10 border border-black/10 dark:border-white/10 hover:opacity-80">Langsung Dibuka</button>
+                <button type="button" onclick="setUnlockOffset(1)" class="px-2 py-1 rounded-md bg-white dark:bg-white/10 border border-black/10 dark:border-white/10 hover:opacity-80">+1 Hari</button>
+                <button type="button" onclick="setUnlockOffset(7)" class="px-2 py-1 rounded-md bg-white dark:bg-white/10 border border-black/10 dark:border-white/10 hover:opacity-80">+1 Minggu</button>
+                <button type="button" onclick="setUnlockOffset(30)" class="px-2 py-1 rounded-md bg-white dark:bg-white/10 border border-black/10 dark:border-white/10 hover:opacity-80">+1 Bulan</button>
+              </div>
+            </div>
+            <input type="datetime-local" id="composeUnlockAt" onchange="renderComposeEnvelopePreview()" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs font-mono focus:outline-none" />
+          </div>
+
+          <!-- Letter Body Textarea (Unlimited Length) -->
+          <div class="flex-1 flex flex-col">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-medium">Isi Surat *</label>
+              <span id="composeCharCounter" class="text-[11px] font-mono opacity-55">0 karakter</span>
+            </div>
+            <textarea id="composeBody" rows="6" required oninput="updateComposeCharCounter()" placeholder="Tuliskan seluruh ceritamu, rindumu, atau harapan untuk hari saat surat ini dibuka..." class="w-full flex-1 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 font-serif text-base sm:text-lg leading-relaxed focus:outline-none resize-y min-h-[150px]"></textarea>
+          </div>
+
+          <!-- Submit Row -->
+          <div class="pt-2 flex items-center justify-end gap-2.5">
+            <button type="button" onclick="closeComposeModal()" class="px-4 py-2.5 rounded-full border border-black/15 dark:border-white/15 text-xs font-medium hover:bg-black/5">
+              Batal
+            </button>
+            <button type="submit" id="submitLetterBtn" class="px-6 py-2.5 rounded-full bg-[#7E2622] hover:bg-[#681E1B] text-[#FAF6EE] text-xs sm:text-sm font-medium shadow-md transition">
+              Segel & Gantung di Kawat
+            </button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: 3D WAX UNSEALING STAGE & FULL LETTER / POLAROID READING TABLE    -->
+  <!-- ========================================================================= -->
+  <div id="readingStageModal" class="fixed inset-0 z-50 hidden items-start sm:items-center justify-center bg-[#141210]/90 backdrop-blur-md p-3 sm:p-6 overflow-y-auto">
+    
+    <!-- STEP 1: 3D SEALED ENVELOPE BACK & RISING LETTER ANIMATION -->
+    <div id="stageSealedView" class="flex flex-col items-center justify-center my-auto w-full max-w-lg py-6">
+      <div class="text-center text-[#FAF6EE] mb-8 sm:mb-10 px-4">
+        <p id="actorRecipientLabel" class="font-serif italic text-2xl sm:text-3xl tracking-wide drop-shadow">To: —</p>
+        <p id="actorSenderLabel" class="text-xs opacity-75 font-serif mt-0.5">From: —</p>
+      </div>
+
+      <div class="perspective-stage flex items-center justify-center my-4">
+        <div class="envelope-3d-stage shadow-2xl rounded-[4px]">
+          <!-- Envelope Interior Backing -->
+          <div id="actorInterior" class="absolute inset-0 rounded-[4px]" style="background-color: #302621;"></div>
+
+          <!-- Rising Letter Sheet -->
+          <div id="actorRisingSheet" class="rising-letter-sheet bg-[#FAF6EE] text-[#231F1D] rounded-[2px] p-4 shadow-lg border border-black/10 flex flex-col justify-between overflow-hidden">
+            <div>
+              <div class="flex items-center justify-between border-b border-black/10 pb-1.5 mb-2">
+                <span id="actorSheetTo" class="font-serif italic text-sm font-semibold">Untuk Kamu,</span>
+                <span id="actorSheetDate" class="text-[9px] font-mono opacity-60">18 NOV 26</span>
+              </div>
+              <p id="actorSheetSnippet" class="font-serif text-xs leading-relaxed opacity-85 line-clamp-4 whitespace-pre-line"></p>
+            </div>
+            <div class="text-[9px] font-serif italic opacity-50 text-right">Membentangkan surat...</div>
+          </div>
+
+          <!-- Rising Tucked Polaroid Card (Supports Photo, Video Thumbnail, and Multi-Item Stack Badge) -->
+          <div id="actorRisingPolaroid" class="rising-polaroid-card hidden bg-[#FAF7F0] p-1.5 pb-4 rounded-[2px] shadow-xl border border-black/15">
+            <div class="w-full h-full relative overflow-hidden rounded-[1px] bg-[#1E1B19]">
+              <img id="actorRisingPolaroidImg" src="" alt="Kenangan" class="w-full h-full object-cover" />
+              <div id="actorRisingVideoBadge" class="hidden absolute inset-0 flex items-center justify-center bg-black/35 text-white">
+                <span class="w-8 h-8 rounded-full bg-black/65 border border-white/40 flex items-center justify-center text-xs pl-0.5">▶</span>
+              </div>
+            </div>
+            <span id="actorRisingStackBadge" class="hidden absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-[#7E2622] text-[#FAF6EE] text-[9px] font-mono shadow">
+              +1
+            </span>
+          </div>
+
+          <!-- Envelope Side & Bottom Flaps -->
+          <div id="actorSidesFlap" class="pocket-3d-sides paper-grain rounded-[4px]"></div>
+          <div id="actorBottomFlap" class="pocket-3d-bottom paper-grain rounded-[4px]"></div>
+
+          <!-- Top Triangular Flap -->
+          <div id="actorTopFlap" class="flap-3d-top paper-grain shadow-md"></div>
+
+          <!-- Interactive Wax Seal Button -->
+          <button type="button" id="actorWaxSeal" onclick="breakWaxSealAndUnfold()"
+                  class="wax-seal-3d absolute left-1/2 top-[56%] -translate-x-1/2 -translate-y-1/2 z-40 w-16 h-16 rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.45)] border-2 border-white/20 flex items-center justify-center text-[#FAF6EE] hover:scale-105 active:scale-95 cursor-pointer"
+                  title="Ketuk untuk memecahkan segel lilin">
+            <span id="actorWaxEmblem"></span>
+          </button>
+        </div>
+      </div>
+
+      <p id="sealPromptText" class="mt-7 sm:mt-8 text-xs sm:text-sm font-serif italic text-[#FAF6EE]/90 tracking-wide">
+        Ketuk segel lilin untuk membuka surat
+      </p>
+
+      <button type="button" onclick="closeReadingStage()" class="mt-5 px-5 py-2 rounded-full border border-white/25 text-[#FAF6EE]/85 hover:text-white hover:bg-white/10 text-xs transition">
+        Tutup
+      </button>
+    </div>
+
+    <!-- STEP 2: FULL UNFOLDED STATIONERY LETTER & 3D FLIPPABLE POLAROID -->
+    <div id="stageReadingTable" class="hidden w-full max-w-4xl my-auto py-4">
+      <div class="flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-6">
+        
+        <!-- Main Unfolded Letter Paper -->
+        <div class="w-full max-w-xl bg-[#FAF6EE] text-[#231F1D] rounded-xl shadow-2xl border border-black/15 p-5 sm:p-10 paper-grain relative flex flex-col justify-between min-h-[380px] sm:min-h-[420px]">
+          <div>
+            <div class="flex flex-wrap items-baseline justify-between gap-2 pb-4 mb-5 sm:mb-6 border-b border-[#231F1D]/15">
+              <h3 id="tableSalutation" class="font-serif italic text-2xl sm:text-3xl font-semibold">Untuk Pasanganku,</h3>
+              <span id="tableWrittenDate" class="text-[11px] font-mono opacity-60"></span>
+            </div>
+
+            <div id="tableLetterBody" class="font-serif text-lg sm:text-xl leading-relaxed whitespace-pre-line text-[#231F1D]/90"></div>
+          </div>
+
+          <div class="mt-8 sm:mt-10 pt-4 border-t border-[#231F1D]/10 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <span class="block text-[11px] font-serif italic opacity-60">Dengan hangat,</span>
+              <span id="tableSignature" class="font-hand text-2xl sm:text-3xl font-semibold text-[#7E2622]">Aku</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="returnToSealedEnvelopeView()" class="px-3 py-1.5 rounded-full border border-black/15 hover:bg-black/5 text-[11px] font-medium transition">
+                Lihat Amplop
+              </button>
+              <button type="button" onclick="deleteActiveLetter()" class="px-3 py-1.5 rounded-full border border-red-800/20 text-red-800 hover:bg-red-800/10 text-[11px] font-medium transition" title="Hapus surat ini dari kawat">
+                Hapus
+              </button>
+              <button type="button" onclick="closeReadingStage()" class="px-4 py-1.5 rounded-full bg-[#231F1D] text-[#FAF6EE] text-xs font-medium hover:opacity-90 transition">
+                Simpan Kembali
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attached Polaroid Carousel Column (Up to 5 Photos/Videos + 3D Flip Secret Note) -->
+        <div id="tablePhotoColumn" class="hidden w-full max-w-[310px] flex flex-col items-center justify-center shrink-0 lg:sticky lg:top-6 lg:self-start space-y-3">
+          
+          <!-- Carousel Top Counter & Navigation (Shown when >1 item) -->
+          <div id="polaroidCarouselHeader" class="hidden w-[272px] sm:w-[284px] flex items-center justify-between px-2 py-1 rounded-full bg-white/10 text-[#FAF6EE] text-xs">
+            <button type="button" onclick="stepReadingMedia(-1)" class="w-7 h-7 rounded-full hover:bg-white/15 flex items-center justify-center transition" title="Media Sebelumnya">‹</button>
+            <div class="flex items-center gap-2">
+              <span id="polaroidCarouselCounter" class="font-mono text-[11px]">1 / 1</span>
+              <div id="polaroidCarouselDots" class="flex items-center gap-1"></div>
+            </div>
+            <button type="button" onclick="stepReadingMedia(1)" class="w-7 h-7 rounded-full hover:bg-white/15 flex items-center justify-center transition" title="Media Berikutnya">›</button>
+          </div>
+
+          <div id="polaroidSwipeArea" class="polaroid-flip-scene w-[272px] sm:w-[284px] h-[346px] sm:h-[358px]">
+            <div id="polaroidFlipInner" class="polaroid-flip-inner">
+              
+              <!-- Front Face: Polaroid Photo or Video Player -->
+              <div class="polaroid-face-front bg-[#FAF7F0] text-[#231F1D] p-3 pb-4 rounded-[4px] shadow-2xl border border-black/15 flex flex-col justify-between">
+                <div id="tableMediaViewport" class="w-full h-[238px] sm:h-[248px] bg-[#161514] overflow-hidden rounded-[2px] relative group">
+                  <!-- Image View -->
+                  <img id="tablePhotoImg" src="" alt="Foto Kenangan" onclick="toggleFlipPolaroid()" class="w-full h-full object-cover cursor-pointer" />
+                  <!-- Iframe Video View (Google Drive / YouTube) -->
+                  <iframe id="tableVideoIframe" src="" class="hidden w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                  <!-- Native HTML5 Video View (.mp4 / .webm / .mov) -->
+                  <video id="tableVideoNative" src="" controls playsinline preload="metadata" class="hidden w-full h-full object-contain bg-black"></video>
+
+                  <!-- Fullscreen Lightbox Button (for Images) -->
+                  <button type="button" id="tableLightboxBtn" onclick="event.stopPropagation(); openHighResLightbox();" class="absolute bottom-2 right-2 px-2.5 py-1 rounded-md bg-black/65 text-white text-[10px] opacity-90 hover:opacity-100 transition">
+                    Perbesar
+                  </button>
+                </div>
+
+                <!-- Polaroid Bottom Caption & Dedicated 3D Flip Trigger -->
+                <div onclick="toggleFlipPolaroid()" class="pt-2 text-center cursor-pointer select-none">
+                  <p id="tablePhotoCaption" class="font-hand text-xl leading-tight truncate">Kenangan kita</p>
+                  <button type="button" onclick="event.stopPropagation(); toggleFlipPolaroid();" class="mt-0.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/5 hover:bg-black/10 text-[10px] font-mono opacity-75 hover:opacity-100 transition">
+                    <span>↻ Balik kartu (catatan rahasia)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Back Face: Secret Handwritten Note on Back of Card -->
+              <div onclick="toggleFlipPolaroid()" class="polaroid-face-back bg-[#F2ECE1] text-[#231F1D] p-5 rounded-[4px] shadow-2xl border border-black/15 paper-grain flex flex-col justify-between cursor-pointer">
+                <div id="tableBackNoteHeader" class="text-[10px] font-mono uppercase tracking-widest opacity-45 border-b border-black/10 pb-2">
+                  Catatan di Balik Kartu
+                </div>
+                <div class="my-auto max-h-[220px] overflow-y-auto px-1 flex items-center justify-center">
+                  <p id="tablePhotoBackNote" class="font-hand text-xl sm:text-2xl leading-snug text-center whitespace-pre-line text-[#2B221E]"></p>
+                </div>
+                <div class="text-center text-[10px] font-mono opacity-60 pt-2 border-t border-black/10">
+                  Ketuk untuk kembali ke depan ↺
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 4: FULLSCREEN PHOTO LIGHTBOX                                        -->
+  <!-- ========================================================================= -->
+  <div id="photoLightbox" onclick="closeHighResLightbox()" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4 cursor-zoom-out">
+    <img id="lightboxImg" src="" alt="Foto Penuh" class="max-w-full max-h-[90dvh] rounded-lg shadow-2xl object-contain" />
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- APPLICATION LOGIC & PRE-EMBEDDED FIREBASE RTDB / GOOGLE DRIVE INTEGRATION -->
+  <!-- ========================================================================= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getMessaging, getToken, onMessage, deleteToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+
+    /***************************************************************************
+     * 1. PRE-EMBEDDED FIREBASE REALTIME DATABASE & GOOGLE APPS SCRIPT CONFIG
+     ***************************************************************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbXmHtNe9megt5QonuMdalpyO40gZLbf0",
+      authDomain: "kapsul-surat-c6426.firebaseapp.com",
+      databaseURL: "https://kapsul-surat-c6426-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "kapsul-surat-c6426",
+      storageBucket: "kapsul-surat-c6426.firebasestorage.app",
+      messagingSenderId: "322713402246",
+      appId: "1:322713402246:web:9a79fbc9fbaa316d008a07"
+    };
+
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx_QQj-vzA8z6Z_1aZPuTD-0ztqxKkY-9Cc_DhRGrTIMpWJ22jiOxljwE1m8rUtMyYg/exec";
+    const VAPID_PUBLIC_KEY = "BPHwE8o6JPNZ46iUUVgdYbLnmz6lG3RHipZYtD22YwriR5eQOCxqzZzUguRbP-cOjRs7R4Rd3iLSsfTO84eqijk";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let messaging = null;
+    try {
+      messaging = getMessaging(app);
+    } catch (e) {
+      console.warn("Firebase Messaging init skipped:", e);
+    }
+    const lettersRef = ref(db, "kapsul_surat_ldr/letters");
+    const wallTitleRef = ref(db, "kapsul_surat_ldr/meta/wallTitle");
+    const connectedRef = ref(db, ".info/connected");
+
+    /***************************************************************************
+     * 2. SILENT 50 CURATED ARCHIVAL ENVELOPE DESIGNS (NO NUMBERS SHOWN)
+     * 10 Archival Paper Stocks × 5 Vintage Stamp & Wax Seal Combinations = 50
+     ***************************************************************************/
+    const PAPER_PALETTES = [
+      { name: 'Classic Ivory Cotton',  bg: '#F7F2E7', flap: '#EDE5D5', inner: '#302621', ink: '#231D1A', sub: '#6E5D4F', border: '#DFD5C3', airmail: false },
+      { name: 'Vintage Kraft',         bg: '#E5D3B8', flap: '#D8C2A3', inner: '#362920', ink: '#261C14', sub: '#66503D', border: '#C9B18F', airmail: false },
+      { name: 'Par Avion Airmail',     bg: '#F5F0E6', flap: '#EAE2D3', inner: '#25374D', ink: '#1D2938', sub: '#566578', border: '#D8CEBE', airmail: true  },
+      { name: 'Sage Botanical Linen',  bg: '#E3E7DE', flap: '#D4DACD', inner: '#273329', ink: '#1E2820', sub: '#556357', border: '#C5CEC0', airmail: false },
+      { name: 'Dusty Rose Parchment',  bg: '#EFE3DF', flap: '#E4D3CD', inner: '#3D2626', ink: '#2B1B1B', sub: '#6E5252', border: '#D9C6C0', airmail: false },
+      { name: 'Midnight Navy',         bg: '#222A36', flap: '#1A212B', inner: '#12171F', ink: '#EFE8DC', sub: '#A3B1C2', border: '#364254', airmail: false },
+      { name: 'Espresso Dark',         bg: '#2B2320', flap: '#221B18', inner: '#171210', ink: '#F2E7D8', sub: '#B5A292', border: '#423631', airmail: false },
+      { name: 'Washi Cream',           bg: '#FBF8F1', flap: '#F0EAE0', inner: '#3B2F28', ink: '#241F1C', sub: '#75685C', border: '#E5DEC9', airmail: false },
+      { name: 'Slate Rag',             bg: '#DFE3E6', flap: '#CFD5D9', inner: '#262C30', ink: '#1E2326', sub: '#5A6369', border: '#BFC7CC', airmail: false },
+      { name: 'Terracotta',            bg: '#E8D5C8', flap: '#DBC2B2', inner: '#3D271E', ink: '#2B1B15', sub: '#6E4F42', border: '#CCAFA0', airmail: false }
+    ];
+
+    const STAMP_SERIES = [
+      { label: 'Segel Crimson',   accent: '#7E2622', wax: '#872924', clip: 'wood',  emblem: 'heart',   stampSvg: `<path d="M12 21s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 11c0 5.65-7 10-7 10z" fill="currentColor"/>` },
+      { label: 'Prangko Kompas',  accent: '#2C4A6B', wax: '#27425E', clip: 'brass', emblem: 'compass', stampSvg: `<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="12,6 14,12 12,18 10,12" fill="currentColor"/>` },
+      { label: 'Botani Hijau',    accent: '#3B523E', wax: '#334A36', clip: 'wood',  emblem: 'leaf',    stampSvg: `<path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75" fill="none" stroke="currentColor" stroke-width="1.6"/>` },
+      { label: 'Lilin Kuningan',  accent: '#785634', wax: '#8F6836', clip: 'iron',  emblem: 'star',    stampSvg: `<polygon points="12,3 14.8,8.8 21,9.6 16.5,14 17.6,20.2 12,17.2 6.4,20.2 7.5,14 3,9.6 9.2,8.8" fill="currentColor"/>` },
+      { label: 'Bulan Burgundy',  accent: '#5E3647', wax: '#6B3044', clip: 'brass', emblem: 'moon',    stampSvg: `<path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" fill="currentColor"/>` }
+    ];
+
+    function getMotifStyle(index = 0) {
+      const safeIndex = Math.abs(parseInt(index, 10) || 0) % 50;
+      const paper = PAPER_PALETTES[safeIndex % PAPER_PALETTES.length];
+      const stamp = STAMP_SERIES[Math.floor(safeIndex / PAPER_PALETTES.length) % STAMP_SERIES.length];
+      return { index: safeIndex, paper, stamp };
+    }
+
+    function getWaxEmblemSvg(type) {
+      if (type === 'compass') {
+        return `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><polygon points="12,6 14,12 12,18 10,12" fill="currentColor"/></svg>`;
+      }
+      if (type === 'star') {
+        return `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,3 14.8,8.8 21,9.6 16.5,14 17.6,20.2 12,17.2 6.4,20.2 7.5,14 3,9.6 9.2,8.8"/></svg>`;
+      }
+      if (type === 'moon') {
+        return `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>`;
+      }
+      return `<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/></svg>`;
+    }
+
+    function getHangingClipHtml(clipType) {
+      if (clipType === 'brass') {
+        return `
+          <div class="absolute -top-5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none">
+            <div class="w-3.5 h-3 rounded-t-full border-2 border-[#B8955A] bg-[#D8B97E]/30"></div>
+            <div class="w-6 h-4 rounded-[2px] bg-gradient-to-b from-[#D9B97E] to-[#96733C] shadow-md border border-[#FFF3D6]/40"></div>
+          </div>`;
+      }
+      if (clipType === 'iron') {
+        return `
+          <div class="absolute -top-5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none">
+            <div class="w-3 h-3 rounded-full border-2 border-[#524C48]"></div>
+            <div class="w-5 h-4 rounded-[2px] bg-gradient-to-b from-[#4A4440] to-[#262321] shadow-md border border-white/15"></div>
+          </div>`;
+      }
+      // Default warm wooden clothespin
+      return `
+        <div class="absolute -top-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-none">
+          <div class="w-3 h-8 rounded-[2px] bg-gradient-to-b from-[#C89D6C] via-[#A67B4B] to-[#875F34] shadow-md border border-[#FFE5C4]/30 flex flex-col justify-center items-center">
+            <div class="w-full h-[2px] bg-[#523A22]"></div>
+          </div>
+        </div>`;
+    }
+
+    /***************************************************************************
+     * 3. STATE MANAGEMENT & SAMPLE LETTERS
+     ***************************************************************************/
+    let letters = [];
+    let activeLetterId = null;
+    let composeMotifIndex = Math.floor(Math.random() * 50);
+    let composeMediaList = []; // Array of { type: 'image'|'video', url, thumbUrl, caption, backNote } (max 5)
+    let composeSelectedMediaIdx = 0;
+    let composeLinkMediaType = "video";
+    let activeReadingMediaList = [];
+    let activeReadingMediaIndex = 0;
+    let isPolaroidFlipped = false;
+    let isFirebaseLive = false;
+
+    // Secret 50-Tap Easter Egg State (for locked time capsules)
+    let secretTapLetterId = null;
+    let secretTapCount = 0;
+    let secretTapTimer = null;
+
+    // Cross-Device Read History per Reader Code
+    let activeReaderCode = localStorage.getItem("ldr_reader_code_v1") || "";
+    let readHistoryMap = {};
+    let directoryReadFilter = "all"; // 'all' | 'unread' | 'read'
+    let unsubscribeReadHistory = null;
+
+    // Service Worker & Native Browser Notification State
+    let swRegistration = null;
+
+    // Infinite Canvas Camera State (Start slightly zoomed out on narrow mobile screens so cards fit nicely)
+    const isMobileScreen = window.innerWidth < 640;
+    let camX = 0;
+    let camY = 0;
+    let camZoom = isMobileScreen ? 0.82 : 1;
+    let isPanningCanvas = false;
+    let panStartX = 0;
+    let panStartY = 0;
+
+    // Touch Pinch Zoom State
+    let initialPinchDistance = null;
+    let initialPinchZoom = 1;
+
+    // Dragging Envelope State (with horizontal velocity pendulum physics)
+    let draggingEnvId = null;
+    let dragStartPointerX = 0;
+    let dragStartPointerY = 0;
+    let lastDragPointerX = 0;
+    let lastDragTimestamp = 0;
+    let dragOriginWorldX = 0;
+    let dragOriginWorldY = 0;
+    let hasDraggedDistance = false;
+
+    // Local Preferences (Wall Title & Light/Dark Ambience)
+    let localPrefs = {
+      wallTitle: "Kapsul Waktu",
+      wallTheme: "light"
+    };
+
+    try {
+      const savedPrefs = localStorage.getItem("ldr_wire_prefs_v3");
+      if (savedPrefs) {
+        localPrefs = { ...localPrefs, ...JSON.parse(savedPrefs) };
+      }
+    } catch (e) {}
+
+    function saveLocalPrefs() {
+      try {
+        localStorage.setItem("ldr_wire_prefs_v3", JSON.stringify(localPrefs));
+      } catch (e) {}
+    }
+
+    // Initial Romantic Sample Letters if database is brand new
+    function getDefaultSampleLetters() {
+      const now = Date.now();
+      return [
+        {
+          id: "sample-letter-1",
+          to: "Aruna",
+          from: "Baskara",
+          body: "Kalau kamu lagi buka surat ini malam-malam, jangan lupa seduh teh hangat dulu ya.\n\nHari ini aku jalan melewati stasiun tempat kita terakhir kali berdiri lama sebelum kereta berangkat. Rasanya masih sama—ada rindu yang tenang tapi selalu pulang ke namamu.\n\nCoba lihat foto yang kuselipkan di sebelah surat ini, lalu balik bagian belakang fotonya ya.",
+          createdAt: now - 86400000 * 4,
+          unlockAt: now - 3600000,
+          worldX: -310,
+          worldY: -110,
+          tilt: -1.8,
+          motifIndex: 2,
+          photoUrl: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=900&q=80",
+          photoCaption: "Senja sebelum keberangkatan",
+          photoBackNote: "Disimpan baik-baik ya. Nanti waktu kita ketemu lagi, kita foto di tempat yang sama tanpa harus buru-buru lihat jam."
+        },
+        {
+          id: "sample-letter-2",
+          to: "Baskara",
+          from: "Aruna",
+          body: "Terima kasih sudah selalu menyempatkan kabar di sela-sela harimu yang padat di sana.\n\nJarak memang bikin kita sering bicara lewat layar, tapi surat-surat kecil yang tergantung di kawat ini selalu bikin aku merasa kamu dekat sekali.\n\nJaga kesehatanmu baik-baik sampai hari kepulanganmu tiba.",
+          createdAt: now - 86400000 * 2,
+          unlockAt: now - 120000,
+          worldX: 40,
+          worldY: -85,
+          tilt: 1.5,
+          motifIndex: 14,
+          photoUrl: "",
+          photoCaption: "",
+          photoBackNote: ""
+        },
+        {
+          id: "sample-letter-3",
+          to: "Aruna & Baskara",
+          from: "Baskara",
+          body: "Selamat hari jadi perjalanan kita! Waktu aku menulis surat ini, kita masih terpisah ribuan kilometer. Semoga saat segel lilin ini terbuka, kita sedang tersenyum membaca betapa sabarnya kita melewati semuanya.",
+          createdAt: now - 3600000 * 12,
+          unlockAt: now + 86400000 * 5 + 3600000 * 4,
+          worldX: -125,
+          worldY: 145,
+          tilt: -0.8,
+          motifIndex: 31,
+          photoUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=900&q=80",
+          photoCaption: "Untuk hari pertemuan kita nanti",
+          photoBackNote: "Jangan dibuka sebelum waktunya tiba ya!"
+        }
+      ];
+    }
+
+    /***************************************************************************
+     * 4. REAL-TIME FIREBASE REALTIME DATABASE SYNC (LETTERS + WALL TITLE)
+     ***************************************************************************/
+    function initRealtimeDatabaseSync() {
+      // Monitor live connection status
+      onValue(connectedRef, (snap) => {
+        isFirebaseLive = snap.val() === true;
+        const dot = document.getElementById("syncIndicatorDot");
+        if (dot) {
+          dot.className = isFirebaseLive
+            ? "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.85)] shrink-0"
+            : "w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.85)] shrink-0";
+        }
+      });
+
+      // Sync editable wall title in real time
+      onValue(wallTitleRef, (snap) => {
+        const remoteTitle = snap.val();
+        if (typeof remoteTitle === "string" && remoteTitle.trim()) {
+          localPrefs.wallTitle = remoteTitle.trim();
+          saveLocalPrefs();
+          renderWallTitleUI();
+        }
+      }, (err) => {
+        console.warn("Gagal membaca wallTitle dari RTDB:", err);
+      });
+
+      // Sync letters collection in real time
+      onValue(lettersRef, async (snapshot) => {
+        const val = snapshot.val();
+        if (!val) {
+          if (!localStorage.getItem("ldr_rtdb_seeded_v1")) {
+            localStorage.setItem("ldr_rtdb_seeded_v1", "1");
+            const defaults = getDefaultSampleLetters();
+            for (const item of defaults) {
+              await saveLetterToCloud(item);
+            }
+            return;
+          }
+          letters = [];
+        } else {
+          const parsed = Object.values(val).filter(item => item && item.id);
+          parsed.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+          letters = parsed;
+        }
+
+        saveFallbackLocalLetters();
+        renderAllEnvelopesOnCanvas();
+        renderDirectoryList();
+        checkScheduledBrowserNotification(false);
+      }, (error) => {
+        console.warn("RTDB snapshot error, beralih ke penyimpanan lokal:", error);
+        loadFallbackLocalLetters();
+      });
+    }
+
+    async function saveLetterToCloud(letterObj) {
+      const idx = letters.findIndex(l => l.id === letterObj.id);
+      if (idx >= 0) {
+        letters[idx] = letterObj;
+      } else {
+        letters.push(letterObj);
+      }
+      saveFallbackLocalLetters();
+
+      try {
+        await set(ref(db, `kapsul_surat_ldr/letters/${letterObj.id}`), letterObj);
+      } catch (err) {
+        console.warn("Gagal menyimpan surat ke Firebase RTDB:", err);
+      }
+    }
+
+    async function updateLetterPositionInCloud(letterId, worldX, worldY) {
+      try {
+        await update(ref(db, `kapsul_surat_ldr/letters/${letterId}`), { worldX, worldY });
+      } catch (err) {
+        console.warn("Gagal memperbarui posisi amplop di RTDB:", err);
+      }
+    }
+
+    async function removeLetterFromCloud(letterId) {
+      letters = letters.filter(l => l.id !== letterId);
+      saveFallbackLocalLetters();
+      renderAllEnvelopesOnCanvas();
+      renderDirectoryList();
+
+      try {
+        await remove(ref(db, `kapsul_surat_ldr/letters/${letterId}`));
+      } catch (err) {
+        console.warn("Gagal menghapus surat dari Firebase RTDB:", err);
+      }
+    }
+
+    function loadFallbackLocalLetters() {
+      try {
+        const raw = localStorage.getItem("ldr_fallback_letters_rtdb_v1");
+        if (raw) {
+          letters = JSON.parse(raw);
+        } else {
+          letters = getDefaultSampleLetters();
+          saveFallbackLocalLetters();
+        }
+      } catch (e) {
+        letters = getDefaultSampleLetters();
+      }
+      renderAllEnvelopesOnCanvas();
+      renderDirectoryList();
+    }
+
+    function saveFallbackLocalLetters() {
+      try {
+        localStorage.setItem("ldr_fallback_letters_rtdb_v1", JSON.stringify(letters));
+      } catch (e) {}
+    }
+
+    /***************************************************************************
+     * 5. INLINE EDITABLE TOP-LEFT WALL TITLE
+     ***************************************************************************/
+    function renderWallTitleUI() {
+      const textEl = document.getElementById("wallTitleText");
+      if (textEl) {
+        textEl.textContent = localPrefs.wallTitle || "Kapsul Waktu";
+      }
+    }
+
+    window.startEditingWallTitle = function () {
+      const displayBtn = document.getElementById("wallTitleDisplayBtn");
+      const inputEl = document.getElementById("wallTitleInput");
+      if (!displayBtn || !inputEl) return;
+
+      inputEl.value = localPrefs.wallTitle || "Kapsul Waktu";
+      displayBtn.classList.add("hidden");
+      inputEl.classList.remove("hidden");
+      inputEl.focus();
+      inputEl.select();
+    };
+
+    async function commitWallTitleEdit() {
+      const displayBtn = document.getElementById("wallTitleDisplayBtn");
+      const inputEl = document.getElementById("wallTitleInput");
+      if (!displayBtn || !inputEl || inputEl.classList.contains("hidden")) return;
+
+      const cleaned = inputEl.value.trim() || "Kapsul Waktu";
+      localPrefs.wallTitle = cleaned;
+      saveLocalPrefs();
+      renderWallTitleUI();
+
+      inputEl.classList.add("hidden");
+      displayBtn.classList.remove("hidden");
+
+      try {
+        await set(wallTitleRef, cleaned);
+      } catch (err) {
+        console.warn("Gagal menyinkronkan judul dinding:", err);
+      }
+    }
+
+    const wallTitleInputEl = document.getElementById("wallTitleInput");
+    if (wallTitleInputEl) {
+      wallTitleInputEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commitWallTitleEdit();
+        } else if (e.key === "Escape") {
+          wallTitleInputEl.value = localPrefs.wallTitle || "Kapsul Waktu";
+          wallTitleInputEl.classList.add("hidden");
+          document.getElementById("wallTitleDisplayBtn").classList.remove("hidden");
+        }
+      });
+      wallTitleInputEl.addEventListener("blur", commitWallTitleEdit);
+    }
+
+    /***************************************************************************
+     * 6. INFINITE 2D PAN & ZOOM CANVAS ENGINE ("UNLI CANVAS")
+     ***************************************************************************/
+    const viewportEl = document.getElementById("infiniteViewport");
+    const wireMeshEl = document.getElementById("wireMeshBackground");
+    const worldCanvasEl = document.getElementById("worldCanvas");
+    const coordReadoutEl = document.getElementById("coordReadout");
+    const zoomReadoutEl = document.getElementById("zoomReadout");
+    const jumpNearestBtn = document.getElementById("jumpNearestBtn");
+
+    function applyCameraTransform() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const screenCenterX = vw / 2 + camX;
+      const screenCenterY = vh / 2 + camY;
+
+      // Transform the infinite world plane
+      worldCanvasEl.style.transform = `translate3d(${screenCenterX}px, ${screenCenterY}px, 0) scale(${camZoom})`;
+
+      // Synchronize the metallic wire grid pitch & position with pan and zoom
+      const baseGridPitch = 96;
+      const scaledPitch = baseGridPitch * camZoom;
+      const offsetX = ((screenCenterX % scaledPitch) + scaledPitch) % scaledPitch;
+      const offsetY = ((screenCenterY % scaledPitch) + scaledPitch) % scaledPitch;
+
+      wireMeshEl.style.backgroundSize = `100% 100%, ${scaledPitch}px ${scaledPitch}px, ${scaledPitch}px ${scaledPitch}px, ${scaledPitch}px ${scaledPitch}px`;
+      wireMeshEl.style.backgroundPosition = `0 0, ${offsetX - 1}px ${offsetY - 1}px, ${offsetX}px ${offsetY}px, ${offsetX}px ${offsetY}px`;
+
+      // Update minimalist bottom-left coordinates
+      const logicalX = Math.round(-camX / camZoom);
+      const logicalY = Math.round(-camY / camZoom);
+      if (coordReadoutEl) {
+        coordReadoutEl.textContent = `X: ${logicalX} · Y: ${logicalY}`;
+      }
+      if (zoomReadoutEl) {
+        zoomReadoutEl.textContent = `${Math.round(camZoom * 100)}%`;
+      }
+
+      // Show "Ke Surat Terdekat" helper if user panned far away from all envelopes
+      checkIfFarFromLetters(logicalX, logicalY);
+    }
+
+    window.glideToOrigin = function () {
+      const defaultZ = window.innerWidth < 640 ? 0.82 : 1;
+      animateCameraTo(0, 0, defaultZ);
+    };
+
+    function checkIfFarFromLetters(currX, currY) {
+      if (!jumpNearestBtn || letters.length === 0) return;
+      let minDistance = Infinity;
+      for (const l of letters) {
+        const dx = (l.worldX || 0) + 138 - currX;
+        const dy = (l.worldY || 0) + 92 - currY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < minDistance) minDistance = dist;
+      }
+      if (minDistance > 750) {
+        jumpNearestBtn.classList.remove("hidden");
+      } else {
+        jumpNearestBtn.classList.add("hidden");
+      }
+    }
+
+    function animateCameraTo(targetWorldX, targetWorldY, targetZoom = 1) {
+      const startX = camX;
+      const startY = camY;
+      const startZ = camZoom;
+      const endX = -targetWorldX * targetZoom;
+      const endY = -targetWorldY * targetZoom;
+      const duration = 520;
+      const startTime = performance.now();
+
+      function frame(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        const ease = 1 - Math.pow(1 - t, 3);
+        camX = startX + (endX - startX) * ease;
+        camY = startY + (endY - startY) * ease;
+        camZoom = startZ + (targetZoom - startZ) * ease;
+        applyCameraTransform();
+        if (t < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    window.resetCanvasView = function () {
+      const defaultZ = window.innerWidth < 640 ? 0.82 : 1;
+      if (letters.length === 0) {
+        animateCameraTo(0, 0, defaultZ);
+        return;
+      }
+      let sumX = 0, sumY = 0;
+      letters.forEach(l => {
+        sumX += (l.worldX || 0) + 138;
+        sumY += (l.worldY || 0) + 92;
+      });
+      animateCameraTo(sumX / letters.length, sumY / letters.length, defaultZ);
+    };
+
+    window.panToNearestLetter = function () {
+      if (letters.length === 0) return;
+      const currX = -camX / camZoom;
+      const currY = -camY / camZoom;
+      let nearest = letters[0];
+      let bestDist = Infinity;
+      for (const l of letters) {
+        const d = Math.hypot((l.worldX || 0) - currX, (l.worldY || 0) - currY);
+        if (d < bestDist) {
+          bestDist = d;
+          nearest = l;
+        }
+      }
+      const targetZ = window.innerWidth < 640 ? Math.max(camZoom, 0.82) : Math.max(camZoom, 0.95);
+      animateCameraTo((nearest.worldX || 0) + 138, (nearest.worldY || 0) + 92, targetZ);
+    };
+
+    window.stepZoom = function (delta) {
+      const nextZoom = Math.min(1.8, Math.max(0.35, +(camZoom + delta).toFixed(2)));
+      const factor = nextZoom / camZoom;
+      camX *= factor;
+      camY *= factor;
+      camZoom = nextZoom;
+      applyCameraTransform();
+    };
+
+    window.resetZoomOnly = function () {
+      const targetZ = window.innerWidth < 640 ? 0.82 : 1;
+      const factor = targetZ / camZoom;
+      camX *= factor;
+      camY *= factor;
+      camZoom = targetZ;
+      applyCameraTransform();
+    };
+
+    // Pointer Events for Infinite Background Panning & Envelope Dragging
+    viewportEl.addEventListener("pointerdown", (e) => {
+      if (e.target.closest(".envelope-card")) return;
+      isPanningCanvas = true;
+      panStartX = e.clientX - camX;
+      panStartY = e.clientY - camY;
+      viewportEl.classList.add("is-panning");
+    });
+
+    window.addEventListener("pointermove", (e) => {
+      if (isPanningCanvas) {
+        camX = e.clientX - panStartX;
+        camY = e.clientY - panStartY;
+        applyCameraTransform();
+        return;
+      }
+
+      if (draggingEnvId) {
+        const now = performance.now();
+        const dt = Math.max(8, now - lastDragTimestamp);
+        const vx = (e.clientX - lastDragPointerX) / dt; // px per ms
+        lastDragPointerX = e.clientX;
+        lastDragTimestamp = now;
+
+        const dxScreen = e.clientX - dragStartPointerX;
+        const dyScreen = e.clientY - dragStartPointerY;
+        if (!hasDraggedDistance && Math.hypot(dxScreen, dyScreen) <= 10) {
+          return;
+        }
+        hasDraggedDistance = true;
+
+        const newWorldX = Math.round(dragOriginWorldX + dxScreen / camZoom);
+        const newWorldY = Math.round(dragOriginWorldY + dyScreen / camZoom);
+
+        const cardEl = document.getElementById(`env-card-${draggingEnvId}`);
+        if (cardEl) {
+          cardEl.classList.add("dragging");
+          cardEl.style.left = `${newWorldX}px`;
+          cardEl.style.top = `${newWorldY}px`;
+          // Realistic pendulum swing proportional to horizontal drag velocity
+          const velocityTilt = Math.max(-14, Math.min(14, -vx * 9));
+          cardEl.style.transform = `rotate(${velocityTilt.toFixed(1)}deg) scale(1.03)`;
+          cardEl.style.setProperty("--swing-start", `${velocityTilt.toFixed(1)}deg`);
+        }
+
+        const letterObj = letters.find(l => l.id === draggingEnvId);
+        if (letterObj) {
+          letterObj.worldX = newWorldX;
+          letterObj.worldY = newWorldY;
+        }
+      }
+    });
+
+    async function finishEnvelopePointerInteraction() {
+      if (isPanningCanvas) {
+        isPanningCanvas = false;
+        viewportEl.classList.remove("is-panning");
+      }
+
+      if (draggingEnvId) {
+        const finishedId = draggingEnvId;
+        draggingEnvId = null;
+        const cardEl = document.getElementById(`env-card-${finishedId}`);
+        const letterObj = letters.find(l => l.id === finishedId);
+
+        if (cardEl && letterObj) {
+          cardEl.classList.remove("dragging");
+          if (hasDraggedDistance) {
+            cardEl.style.setProperty("--resting-tilt", `${letterObj.tilt || 0}deg`);
+            cardEl.classList.remove("envelope-swing");
+            void cardEl.offsetWidth;
+            cardEl.classList.add("envelope-swing");
+          }
+        }
+
+        if (hasDraggedDistance && letterObj) {
+          saveFallbackLocalLetters();
+          await updateLetterPositionInCloud(letterObj.id, letterObj.worldX, letterObj.worldY);
+        }
+      }
+    }
+
+    window.addEventListener("pointerup", finishEnvelopePointerInteraction);
+    window.addEventListener("pointercancel", finishEnvelopePointerInteraction);
+
+    // Touch Pinch Zoom Gesture Support on Mobile
+    viewportEl.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 2) {
+        isPanningCanvas = false;
+        draggingEnvId = null;
+        initialPinchDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialPinchZoom = camZoom;
+      }
+    }, { passive: true });
+
+    viewportEl.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 2 && initialPinchDistance) {
+        const currentDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const nextZoom = Math.min(1.8, Math.max(0.35, initialPinchZoom * (currentDist / initialPinchDistance)));
+        const ratio = nextZoom / camZoom;
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const rect = viewportEl.getBoundingClientRect();
+
+        camX -= (midX - (rect.width / 2 + camX)) * (ratio - 1);
+        camY -= (midY - (rect.height / 2 + camY)) * (ratio - 1);
+        camZoom = nextZoom;
+        applyCameraTransform();
+      }
+    }, { passive: true });
+
+    viewportEl.addEventListener("touchend", () => {
+      initialPinchDistance = null;
+    });
+
+    // Wheel Zoom on Canvas
+    viewportEl.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+      const nextZoom = Math.min(1.8, Math.max(0.35, camZoom * zoomFactor));
+      const ratio = nextZoom / camZoom;
+
+      // Zoom toward cursor position
+      const rect = viewportEl.getBoundingClientRect();
+      const cursorOffsetX = e.clientX - (rect.width / 2 + camX);
+      const cursorOffsetY = e.clientY - (rect.height / 2 + camY);
+
+      camX -= cursorOffsetX * (ratio - 1);
+      camY -= cursorOffsetY * (ratio - 1);
+      camZoom = nextZoom;
+      applyCameraTransform();
+    }, { passive: false });
+
+    window.addEventListener("resize", applyCameraTransform);
+
+    /***************************************************************************
+     * 6. RENDERING AUTHENTIC ENVELOPE CARDS ON THE WIRE GRID
+     ***************************************************************************/
+    function formatShortPostmarkDate(ts) {
+      if (!ts) return "18 NOV 26";
+      const d = new Date(ts);
+      return d.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "2-digit" }).toUpperCase();
+    }
+
+    function formatFullIndonesianDate(ts) {
+      if (!ts) return "";
+      const d = new Date(ts);
+      return d.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function formatCountdownString(unlockAt) {
+      const diff = unlockAt - Date.now();
+      if (diff <= 0) return null;
+      const totalSec = Math.floor(diff / 1000);
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
+      const mins = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+
+      const pad = (n) => String(n).padStart(2, "0");
+      if (days > 0) {
+        return `${days}h ${pad(hours)}j ${pad(mins)}m ${pad(secs)}d`;
+      }
+      return `${pad(hours)}j ${pad(mins)}m ${pad(secs)}d`;
+    }
+
+    function buildEnvelopeFrontHtml(letter, isPreview = false) {
+      const style = getMotifStyle(letter.motifIndex || 0);
+      const { paper, stamp } = style;
+      const isLocked = (letter.unlockAt || 0) > Date.now();
+      const countdownStr = isLocked ? formatCountdownString(letter.unlockAt) : null;
+      const postmarkDate = formatShortPostmarkDate(letter.createdAt || Date.now());
+      const mediaItems = getLetterMediaList(letter);
+      const photoCount = mediaItems.filter(m => m.type !== "video").length;
+      const videoCount = mediaItems.filter(m => m.type === "video").length;
+      let mediaBadgeLabel = "";
+      if (mediaItems.length === 1) {
+        mediaBadgeLabel = videoCount === 1 ? "🎬 Video" : "📷 Foto";
+      } else if (mediaItems.length > 1) {
+        const parts = [];
+        if (photoCount > 0) parts.push(`📷 ${photoCount}`);
+        if (videoCount > 0) parts.push(`🎬 ${videoCount}`);
+        mediaBadgeLabel = parts.join(" · ");
+      }
+
+      const outerFrameClass = paper.airmail ? "airmail-edge rounded-[3px] w-full h-full" : "w-full h-full";
+
+      // Subtle Polaroid Corner Peeking / Brass Paperclip Indicator if Media Attached
+      const photoIndicatorHtml = mediaItems.length > 0
+        ? `<div class="absolute -top-1.5 left-4 z-20 flex items-center gap-1 bg-[#FAF7F0] text-[#231F1D] px-2 py-0.5 rounded-t-[2px] shadow-sm border border-black/15 -rotate-3" title="Ada ${mediaItems.length} lampiran foto/video di dalam surat">
+             <span class="w-2 h-2 rounded-full bg-[#B8955A]"></span>
+             <span class="text-[9px] font-mono tracking-tighter uppercase opacity-80">${mediaBadgeLabel}</span>
+           </div>`
+        : "";
+
+      // Bottom Time Capsule Status Strip
+      const statusBadgeHtml = isLocked
+        ? `<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono tracking-tight shadow-sm border border-white/15" style="background-color: #7E2622; color: #FAF6EE;">
+             <span>⏳</span>
+             <span data-countdown-id="${letter.id}">${countdownStr || "Terkunci"}</span>
+           </div>`
+        : `<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-serif italic tracking-wide border" style="background-color: ${stamp.accent}18; color: ${paper.ink}; border-color: ${stamp.accent}40;">
+             <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${stamp.accent};"></span>
+             <span>Siap Dibuka</span>
+           </div>`;
+
+      return `
+        ${!isPreview ? getHangingClipHtml(stamp.clip) : ""}
+        ${photoIndicatorHtml}
+        <div class="${outerFrameClass} shadow-[0_12px_28px_rgba(0,0,0,0.18)] rounded-[3px] relative overflow-hidden">
+          <div class="w-full h-full p-4 flex flex-col justify-between relative paper-grain rounded-[2px]"
+               style="background-color: ${paper.bg}; color: ${paper.ink}; border: 1px solid ${paper.border};">
+            
+            <!-- Subtle Envelope Seam Lines -->
+            <div class="pointer-events-none absolute inset-0 opacity-25"
+                 style="background: linear-gradient(135deg, transparent 48%, ${paper.border} 49%, transparent 50%), linear-gradient(225deg, transparent 48%, ${paper.border} 49%, transparent 50%);"></div>
+
+            <!-- Top Row: Origin Postmark & Perforated Postage Stamp -->
+            <div class="relative z-10 flex items-start justify-between">
+              <!-- Circular Ink Postmark -->
+              <div class="flex items-center gap-1 opacity-60" style="color: ${paper.ink};">
+                <div class="w-9 h-9 rounded-full border border-current flex flex-col items-center justify-center text-[7px] font-mono leading-none tracking-tighter -rotate-12">
+                  <span>POS</span>
+                  <span class="font-semibold my-0.5">${postmarkDate}</span>
+                  <span>LDR</span>
+                </div>
+                <svg class="w-9 h-4 opacity-70" viewBox="0 0 48 16" fill="none" stroke="currentColor" stroke-width="1.1">
+                  <path d="M0 3 Q 6 0, 12 3 T 24 3 T 36 3 T 48 3" />
+                  <path d="M0 8 Q 6 5, 12 8 T 24 8 T 36 8 T 48 8" />
+                  <path d="M0 13 Q 6 10, 12 13 T 24 13 T 36 13 T 48 13" />
+                </svg>
+              </div>
+
+              <!-- Classic Postage Stamp -->
+              <div class="postage-stamp shadow-sm rounded-[1px]">
+                <div class="w-9 h-11 flex flex-col items-center justify-between p-1"
+                     style="background-color: ${paper.flap}; color: ${stamp.accent}; border: 1px solid ${stamp.accent}40;">
+                  <span class="text-[6px] font-mono uppercase tracking-widest opacity-75">SURAT</span>
+                  <svg class="w-4 h-4" viewBox="0 0 24 24">${stamp.stampSvg}</svg>
+                  <span class="text-[6px] font-mono">✦</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Center Recipient Calligraphic Address ("To: [Pasangan]") -->
+            <div class="relative z-10 my-auto pl-1 pr-2">
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-[11px] font-serif italic opacity-60" style="color: ${paper.sub};">To:</span>
+                <span class="font-serif italic text-2xl font-semibold tracking-wide truncate">${escapeHtml(letter.to || "Pasanganku")}</span>
+              </div>
+              <div class="flex items-baseline gap-1.5 mt-0.5">
+                <span class="text-[10px] font-serif italic opacity-55" style="color: ${paper.sub};">From:</span>
+                <span class="text-xs font-serif tracking-wide opacity-85 truncate">${escapeHtml(letter.from || "Aku")}</span>
+              </div>
+            </div>
+
+            <!-- Bottom Row: Wax Seal Mini Emblem (with hidden hairline crack SVG for 50x tap) & Time Capsule Countdown -->
+            <div class="relative z-10 flex items-center justify-between pt-1">
+              <div class="w-5 h-5 rounded-full shadow-inner flex items-center justify-center text-[9px] text-white/90 relative overflow-hidden"
+                   style="background: radial-gradient(circle at 30% 30%, ${stamp.wax}, #2B1210);">
+                <span>✦</span>
+                <svg class="secret-seal-crack absolute inset-0 w-full h-full pointer-events-none opacity-0 transition-opacity duration-200" viewBox="0 0 20 20">
+                  <path d="M10 1 L8.5 7 L12 10.5 L8 15 L10.5 19" stroke="rgba(255,255,255,0.85)" stroke-width="1.1" fill="none" />
+                  <path d="M3 9 L8.5 9.5 M12 10.5 L17 8.5" stroke="rgba(255,255,255,0.7)" stroke-width="0.9" fill="none" />
+                </svg>
+              </div>
+              ${statusBadgeHtml}
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAllEnvelopesOnCanvas() {
+      worldCanvasEl.innerHTML = "";
+      letters.forEach((letter) => {
+        const card = document.createElement("div");
+        card.id = `env-card-${letter.id}`;
+        card.className = "envelope-card select-none";
+        const wx = typeof letter.worldX === "number" ? letter.worldX : 0;
+        const wy = typeof letter.worldY === "number" ? letter.worldY : 0;
+        const tilt = typeof letter.tilt === "number" ? letter.tilt : 0;
+
+        card.style.left = `${wx}px`;
+        card.style.top = `${wy}px`;
+        card.style.setProperty("--resting-tilt", `${tilt}deg`);
+        card.style.transform = `rotate(${tilt}deg)`;
+
+        card.innerHTML = buildEnvelopeFrontHtml(letter, false);
+
+        // Pointer Down on Envelope -> Start Drag or Tap to Open
+        card.addEventListener("pointerdown", (e) => {
+          e.stopPropagation();
+          draggingEnvId = letter.id;
+          dragStartPointerX = e.clientX;
+          dragStartPointerY = e.clientY;
+          lastDragPointerX = e.clientX;
+          lastDragTimestamp = performance.now();
+          dragOriginWorldX = letter.worldX || 0;
+          dragOriginWorldY = letter.worldY || 0;
+          hasDraggedDistance = false;
+        });
+
+        card.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (hasDraggedDistance) return;
+          handleEnvelopeCardClick(letter.id);
+        });
+
+        worldCanvasEl.appendChild(card);
+      });
+
+      checkIfFarFromLetters(-camX / camZoom, -camY / camZoom);
+    }
+
+    // Live 1-Second Ticker for Locked Time Capsule Countdowns on the Grid
+    setInterval(() => {
+      const now = Date.now();
+      letters.forEach((letter) => {
+        const badgeSpan = document.querySelector(`[data-countdown-id="${letter.id}"]`);
+        if (!badgeSpan) return;
+        const diff = (letter.unlockAt || 0) - now;
+        if (diff <= 0) {
+          renderAllEnvelopesOnCanvas();
+          renderDirectoryList();
+        } else {
+          badgeSpan.textContent = formatCountdownString(letter.unlockAt);
+        }
+      });
+    }, 1000);
+
+    /***************************************************************************
+     * 7. ENVELOPE CLICK -> LOCKED SHAKE + 50x TAP EASTER EGG OR 3D UNSEALING
+     ***************************************************************************/
+    let lockedToastTimeout = null;
+
+    function resetSecretTapState() {
+      secretTapLetterId = null;
+      secretTapCount = 0;
+      if (secretTapTimer) clearTimeout(secretTapTimer);
+      document.querySelectorAll(".secret-seal-crack").forEach((el) => {
+        el.style.opacity = "0";
+      });
+    }
+
+    function handleEnvelopeCardClick(letterId) {
+      const letter = letters.find(l => l.id === letterId);
+      if (!letter) return;
+
+      const isLocked = (letter.unlockAt || 0) > Date.now();
+      if (isLocked) {
+        const cardEl = document.getElementById(`env-card-${letter.id}`);
+        if (cardEl) {
+          cardEl.classList.remove("locked-shake");
+          void cardEl.offsetWidth;
+          cardEl.classList.add("locked-shake");
+        }
+
+        // Track 50 consecutive taps on the same locked envelope
+        if (secretTapLetterId !== letter.id) {
+          resetSecretTapState();
+          secretTapLetterId = letter.id;
+        }
+        secretTapCount += 1;
+
+        if (secretTapTimer) clearTimeout(secretTapTimer);
+        secretTapTimer = setTimeout(() => {
+          resetSecretTapState();
+        }, 6000);
+
+        // Subtle visual crack on mini wax seal starting at tap 20 (pure visual cue, no text)
+        if (cardEl && secretTapCount >= 20) {
+          const crackSvg = cardEl.querySelector(".secret-seal-crack");
+          if (crackSvg) {
+            const opacity = Math.min(1, (secretTapCount - 19) / 30);
+            crackSvg.style.opacity = opacity.toFixed(2);
+          }
+        }
+
+        // Unlock via secret Easter egg on 50th consecutive tap
+        if (secretTapCount >= 50) {
+          resetSecretTapState();
+          const toast = document.getElementById("lockedToast");
+          if (toast) toast.classList.add("hidden");
+          openReadingStageForLetter(letter);
+          return;
+        }
+
+        showLockedCapsuleToast(letter);
+        return;
+      }
+
+      resetSecretTapState();
+      openReadingStageForLetter(letter);
+    }
+
+    function showLockedCapsuleToast(letter) {
+      const toast = document.getElementById("lockedToast");
+      const textEl = document.getElementById("lockedToastCountdown");
+      if (!toast || !textEl) return;
+
+      const cd = formatCountdownString(letter.unlockAt);
+      textEl.textContent = `Buka dalam ${cd} (${formatFullIndonesianDate(letter.unlockAt)})`;
+      toast.classList.remove("hidden");
+
+      if (lockedToastTimeout) clearTimeout(lockedToastTimeout);
+      lockedToastTimeout = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 4200);
+    }
+
+    function openReadingStageForLetter(letter) {
+      activeLetterId = letter.id;
+      isPolaroidFlipped = false;
+
+      const style = getMotifStyle(letter.motifIndex || 0);
+      const { paper, stamp } = style;
+
+      // Configure 3D Envelope Back Colors
+      document.getElementById("actorInterior").style.backgroundColor = paper.inner;
+      document.getElementById("actorSidesFlap").style.backgroundColor = paper.bg;
+      document.getElementById("actorSidesFlap").style.border = `1px solid ${paper.border}`;
+      document.getElementById("actorBottomFlap").style.backgroundColor = paper.flap;
+      document.getElementById("actorTopFlap").style.backgroundColor = paper.flap;
+      document.getElementById("actorTopFlap").style.borderBottom = `1px solid ${paper.border}`;
+
+      // Configure Wax Seal
+      const waxBtn = document.getElementById("actorWaxSeal");
+      waxBtn.style.background = `radial-gradient(circle at 35% 30%, ${stamp.wax}, #36110E)`;
+      document.getElementById("actorWaxEmblem").innerHTML = getWaxEmblemSvg(stamp.emblem);
+
+      // Reset 3D Animation Classes
+      waxBtn.classList.remove("cracked");
+      document.getElementById("actorTopFlap").classList.remove("is-open");
+      document.getElementById("actorRisingSheet").classList.remove("slide-up");
+
+      const risingPolaroid = document.getElementById("actorRisingPolaroid");
+      const risingPolaroidImg = document.getElementById("actorRisingPolaroidImg");
+      const risingVideoBadge = document.getElementById("actorRisingVideoBadge");
+      const risingStackBadge = document.getElementById("actorRisingStackBadge");
+      risingPolaroid.classList.remove("slide-up");
+
+      activeReadingMediaList = getLetterMediaList(letter);
+      activeReadingMediaIndex = 0;
+
+      if (activeReadingMediaList.length > 0) {
+        const firstMedia = activeReadingMediaList[0];
+        risingPolaroid.classList.remove("hidden");
+
+        if (firstMedia.type === "video") {
+          risingVideoBadge.classList.remove("hidden");
+          if (firstMedia.thumbUrl) {
+            risingPolaroidImg.src = firstMedia.thumbUrl;
+            risingPolaroidImg.classList.remove("hidden");
+          } else {
+            risingPolaroidImg.removeAttribute("src");
+            risingPolaroidImg.classList.add("hidden");
+          }
+        } else {
+          risingVideoBadge.classList.add("hidden");
+          risingPolaroidImg.src = firstMedia.url;
+          risingPolaroidImg.classList.remove("hidden");
+        }
+
+        if (activeReadingMediaList.length > 1) {
+          risingStackBadge.textContent = `+${activeReadingMediaList.length - 1}`;
+          risingStackBadge.classList.remove("hidden");
+        } else {
+          risingStackBadge.classList.add("hidden");
+        }
+      } else {
+        risingPolaroid.classList.add("hidden");
+      }
+
+      // Preview Sheet Snippet
+      document.getElementById("actorSheetTo").textContent = `Untuk ${letter.to || "Kamu"},`;
+      document.getElementById("actorSheetDate").textContent = formatShortPostmarkDate(letter.createdAt);
+      document.getElementById("actorSheetSnippet").textContent = letter.body || "";
+
+      document.getElementById("actorRecipientLabel").textContent = `To: ${letter.to || "—"}`;
+      document.getElementById("actorSenderLabel").textContent = `From: ${letter.from || "—"}`;
+      document.getElementById("sealPromptText").textContent = "Ketuk segel lilin untuk membuka surat";
+
+      // Populate Step 3 Reading Table
+      document.getElementById("tableSalutation").textContent = `Untuk ${letter.to || "Pasanganku"},`;
+      document.getElementById("tableWrittenDate").textContent = formatFullIndonesianDate(letter.createdAt);
+      document.getElementById("tableLetterBody").textContent = letter.body || "";
+      document.getElementById("tableSignature").textContent = letter.from || "Aku";
+
+      // Populate Tucked Media Carousel & 3D Back-of-Card Secret Note
+      const photoCol = document.getElementById("tablePhotoColumn");
+      if (activeReadingMediaList.length > 0) {
+        photoCol.classList.remove("hidden");
+        renderReadingMediaSlide(letter);
+      } else {
+        photoCol.classList.add("hidden");
+        stopActiveMediaPlayback();
+      }
+
+      // Show Sealed View First
+      document.getElementById("stageSealedView").classList.remove("hidden");
+      document.getElementById("stageReadingTable").classList.add("hidden");
+
+      const modal = document.getElementById("readingStageModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function stopActiveMediaPlayback() {
+      const iframeEl = document.getElementById("tableVideoIframe");
+      const nativeVidEl = document.getElementById("tableVideoNative");
+      if (iframeEl) iframeEl.src = "";
+      if (nativeVidEl) {
+        nativeVidEl.pause();
+        nativeVidEl.removeAttribute("src");
+        nativeVidEl.load();
+      }
+    }
+
+    function renderReadingMediaSlide(letterOverride = null) {
+      const letter = letterOverride || letters.find(l => l.id === activeLetterId) || { to: "Kamu", from: "Aku" };
+      const total = activeReadingMediaList.length;
+      if (total === 0) return;
+
+      if (activeReadingMediaIndex < 0) activeReadingMediaIndex = total - 1;
+      if (activeReadingMediaIndex >= total) activeReadingMediaIndex = 0;
+
+      const item = activeReadingMediaList[activeReadingMediaIndex];
+      isPolaroidFlipped = false;
+      const flipInner = document.getElementById("polaroidFlipInner");
+      if (flipInner) flipInner.classList.remove("is-flipped");
+
+      // Header Carousel Controls (when > 1 item)
+      const headerEl = document.getElementById("polaroidCarouselHeader");
+      const counterEl = document.getElementById("polaroidCarouselCounter");
+      const dotsEl = document.getElementById("polaroidCarouselDots");
+      if (total > 1) {
+        headerEl.classList.remove("hidden");
+        counterEl.textContent = `${activeReadingMediaIndex + 1} / ${total}`;
+        dotsEl.innerHTML = activeReadingMediaList
+          .map((_, idx) => `<button type="button" onclick="jumpReadingMedia(${idx})" class="w-2 h-2 rounded-full transition ${idx === activeReadingMediaIndex ? "bg-[#FAF6EE] scale-125" : "bg-white/35 hover:bg-white/60"}"></button>`)
+          .join("");
+      } else {
+        headerEl.classList.add("hidden");
+      }
+
+      const imgEl = document.getElementById("tablePhotoImg");
+      const iframeEl = document.getElementById("tableVideoIframe");
+      const nativeVidEl = document.getElementById("tableVideoNative");
+      const lightboxBtn = document.getElementById("tableLightboxBtn");
+
+      stopActiveMediaPlayback();
+
+      if (item.type === "video") {
+        imgEl.classList.add("hidden");
+        lightboxBtn.classList.add("hidden");
+
+        const isEmbed = /drive\.google\.com\/file\/d\/|youtube\.com\/embed\/|player\.vimeo\.com\//i.test(item.url);
+        if (isEmbed) {
+          nativeVidEl.classList.add("hidden");
+          iframeEl.classList.remove("hidden");
+          iframeEl.src = item.url;
+        } else {
+          iframeEl.classList.add("hidden");
+          nativeVidEl.classList.remove("hidden");
+          nativeVidEl.src = item.url;
+        }
+      } else {
+        iframeEl.classList.add("hidden");
+        nativeVidEl.classList.add("hidden");
+        imgEl.classList.remove("hidden");
+        lightboxBtn.classList.remove("hidden");
+        imgEl.src = item.url;
+        document.getElementById("lightboxImg").src = item.url;
+      }
+
+      document.getElementById("tablePhotoCaption").textContent =
+        item.caption && item.caption.trim()
+          ? item.caption
+          : (item.type === "video" ? "Klip kenangan kita" : "Kenangan kita");
+
+      document.getElementById("tableBackNoteHeader").textContent =
+        total > 1 ? `Catatan di Balik Kartu #${activeReadingMediaIndex + 1}` : "Catatan di Balik Kartu";
+
+      document.getElementById("tablePhotoBackNote").textContent =
+        item.backNote && item.backNote.trim()
+          ? item.backNote
+          : `Disimpan bersama surat untuk ${letter.to}.
+— ${letter.from}`;
+    }
+
+    window.stepReadingMedia = function (delta) {
+      if (activeReadingMediaList.length <= 1) return;
+      activeReadingMediaIndex = (activeReadingMediaIndex + delta + activeReadingMediaList.length) % activeReadingMediaList.length;
+      renderReadingMediaSlide();
+    };
+
+    window.jumpReadingMedia = function (idx) {
+      activeReadingMediaIndex = idx;
+      renderReadingMediaSlide();
+    };
+
+    // Touch swipe left/right on Polaroid frame to switch between media items
+    (function initPolaroidSwipeGesture() {
+      const swipeEl = document.getElementById("polaroidSwipeArea");
+      if (!swipeEl) return;
+      let touchStartX = 0;
+      let touchStartY = 0;
+      swipeEl.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+      swipeEl.addEventListener("touchend", (e) => {
+        if (activeReadingMediaList.length <= 1 || e.changedTouches.length !== 1) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+          stepReadingMedia(dx < 0 ? 1 : -1);
+        }
+      }, { passive: true });
+    })();
+
+    let isUnsealingAnimating = false;
+
+    window.breakWaxSealAndUnfold = function () {
+      if (isUnsealingAnimating) return;
+      isUnsealingAnimating = true;
+
+      if (activeLetterId && activeReaderCode) {
+        markLetterAsReadForActiveCode(activeLetterId);
+      }
+
+      const waxBtn = document.getElementById("actorWaxSeal");
+      const topFlap = document.getElementById("actorTopFlap");
+      const risingSheet = document.getElementById("actorRisingSheet");
+      const risingPolaroid = document.getElementById("actorRisingPolaroid");
+      const promptEl = document.getElementById("sealPromptText");
+
+      promptEl.textContent = "Membuka segel lilin...";
+      waxBtn.classList.add("cracked");
+
+      setTimeout(() => {
+        topFlap.classList.add("is-open");
+      }, 240);
+
+      setTimeout(() => {
+        risingSheet.classList.add("slide-up");
+        if (!risingPolaroid.classList.contains("hidden")) {
+          risingPolaroid.classList.add("slide-up");
+        }
+      }, 650);
+
+      setTimeout(() => {
+        document.getElementById("stageSealedView").classList.add("hidden");
+        document.getElementById("stageReadingTable").classList.remove("hidden");
+        isUnsealingAnimating = false;
+      }, 1480);
+    };
+
+    window.returnToSealedEnvelopeView = function () {
+      stopActiveMediaPlayback();
+      const letter = letters.find(l => l.id === activeLetterId);
+      if (letter) openReadingStageForLetter(letter);
+    };
+
+    window.closeReadingStage = function () {
+      stopActiveMediaPlayback();
+      const modal = document.getElementById("readingStageModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      isUnsealingAnimating = false;
+    };
+
+    window.toggleFlipPolaroid = function () {
+      isPolaroidFlipped = !isPolaroidFlipped;
+      const flipInner = document.getElementById("polaroidFlipInner");
+      if (isPolaroidFlipped) {
+        flipInner.classList.add("is-flipped");
+      } else {
+        flipInner.classList.remove("is-flipped");
+      }
+    };
+
+    window.openHighResLightbox = function () {
+      const lb = document.getElementById("photoLightbox");
+      lb.classList.remove("hidden");
+      lb.classList.add("flex");
+    };
+
+    window.closeHighResLightbox = function () {
+      const lb = document.getElementById("photoLightbox");
+      lb.classList.add("hidden");
+      lb.classList.remove("flex");
+    };
+
+    window.deleteActiveLetter = async function () {
+      if (!activeLetterId) return;
+      const idToRemove = activeLetterId;
+      closeReadingStage();
+      await removeLetterFromCloud(idToRemove);
+    };
+
+    /***************************************************************************
+     * 8. MULTI-MEDIA (MAX 5 PHOTOS/VIDEOS) + GOOGLE DRIVE / LINK PARSER
+     ***************************************************************************/
+    const MAX_MEDIA_PER_LETTER = 5;
+    const MAX_DIRECT_VIDEO_BYTES = 25 * 1024 * 1024; // 25 MB direct upload limit
+
+    function extractGoogleDriveFileId(url) {
+      if (!url) return null;
+      const trimmed = String(url).trim();
+      if (!trimmed.includes("drive.google.com") && !trimmed.includes("docs.google.com")) return null;
+      const match =
+        trimmed.match(/\/d\/([a-zA-Z0-9_-]{15,})/) ||
+        trimmed.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+      return match && match[1] ? match[1] : null;
+    }
+
+    function extractYouTubeVideoId(url) {
+      if (!url) return null;
+      const trimmed = String(url).trim();
+      const match = trimmed.match(
+        /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+      );
+      return match && match[1] ? match[1] : null;
+    }
+
+    function normalizeMediaUrl(rawUrl, preferredType = "auto") {
+      if (!rawUrl) return null;
+      const trimmed = String(rawUrl).trim();
+      if (!trimmed) return null;
+
+      // 1. YouTube / YouTube Shorts
+      const ytId = extractYouTubeVideoId(trimmed);
+      if (ytId) {
+        return {
+          type: "video",
+          url: `https://www.youtube.com/embed/${ytId}?rel=0`,
+          thumbUrl: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+        };
+      }
+
+      // 2. Google Drive File Link
+      const driveId = extractGoogleDriveFileId(trimmed);
+      if (driveId) {
+        const isVideo =
+          preferredType === "video" ||
+          (preferredType === "auto" && /\/preview(?:\?|$)/.test(trimmed));
+        if (isVideo) {
+          return {
+            type: "video",
+            url: `https://drive.google.com/file/d/${driveId}/preview`,
+            thumbUrl: `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`
+          };
+        }
+        return {
+          type: "image",
+          url: `https://lh3.googleusercontent.com/d/${driveId}`,
+          thumbUrl: `https://lh3.googleusercontent.com/d/${driveId}`
+        };
+      }
+
+      // 3. Direct Video Extension or Explicit Video Selection
+      const isDirectVideoExt = /\.(mp4|webm|mov|m4v|ogg)(?:[?#]|$)/i.test(trimmed) || trimmed.startsWith("data:video/");
+      if (preferredType === "video" || isDirectVideoExt) {
+        return {
+          type: "video",
+          url: trimmed,
+          thumbUrl: ""
+        };
+      }
+
+      // 4. Default to Image
+      return {
+        type: "image",
+        url: trimmed,
+        thumbUrl: trimmed
+      };
+    }
+
+    function getLetterMediaList(letter) {
+      if (!letter) return [];
+      if (Array.isArray(letter.media) && letter.media.length > 0) {
+        return letter.media
+          .filter(m => m && m.url && String(m.url).trim())
+          .slice(0, MAX_MEDIA_PER_LETTER)
+          .map(m => {
+            const norm = normalizeMediaUrl(m.url, m.type === "video" ? "video" : "image");
+            return {
+              type: m.type === "video" ? "video" : (norm ? norm.type : "image"),
+              url: norm ? norm.url : String(m.url).trim(),
+              thumbUrl: m.thumbUrl || (norm ? norm.thumbUrl : ""),
+              caption: m.caption || "",
+              backNote: m.backNote || ""
+            };
+          });
+      }
+      if (letter.photoUrl && String(letter.photoUrl).trim()) {
+        const norm = normalizeMediaUrl(letter.photoUrl, "auto");
+        if (norm) {
+          return [{
+            type: norm.type,
+            url: norm.url,
+            thumbUrl: norm.thumbUrl || "",
+            caption: letter.photoCaption || "",
+            backNote: letter.photoBackNote || ""
+          }];
+        }
+      }
+      return [];
+    }
+
+    function compressImageFile(file, maxDim = 1200, quality = 0.82) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.onerror = reject;
+          img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    window.setComposeLinkMediaType = function (type) {
+      composeLinkMediaType = type === "image" ? "image" : "video";
+      const vidBtn = document.getElementById("linkTypeBtn-video");
+      const imgBtn = document.getElementById("linkTypeBtn-image");
+      const inputEl = document.getElementById("photoDirectUrlInput");
+      if (vidBtn && imgBtn) {
+        if (composeLinkMediaType === "video") {
+          vidBtn.className = "px-2 py-1 rounded-md font-medium bg-[#7E2622] text-[#FAF6EE] transition";
+          imgBtn.className = "px-2 py-1 rounded-md font-medium opacity-75 hover:opacity-100 transition";
+          if (inputEl) inputEl.placeholder = "Tempel link video Google Drive / YouTube / .mp4...";
+        } else {
+          imgBtn.className = "px-2 py-1 rounded-md font-medium bg-[#7E2622] text-[#FAF6EE] transition";
+          vidBtn.className = "px-2 py-1 rounded-md font-medium opacity-75 hover:opacity-100 transition";
+          if (inputEl) inputEl.placeholder = "Tempel link foto Google Drive / URL gambar...";
+        }
+      }
+    };
+
+    window.handleMediaFilesSelect = async function (event) {
+      const files = Array.from((event.target && event.target.files) || []);
+      event.target.value = "";
+      if (files.length === 0) return;
+
+      const remainingSlots = MAX_MEDIA_PER_LETTER - composeMediaList.length;
+      if (remainingSlots <= 0) {
+        showComposeMediaStatus("Maksimal 5 foto/video per surat sudah tercapai.");
+        return;
+      }
+
+      const filesToProcess = files.slice(0, remainingSlots);
+      for (let i = 0; i < filesToProcess.length; i++) {
+        const file = filesToProcess[i];
+        const isVideo = (file.type || "").startsWith("video/");
+        const progressPrefix = filesToProcess.length > 1 ? `(${i + 1}/${filesToProcess.length}) ` : "";
+
+        if (isVideo) {
+          if (file.size > MAX_DIRECT_VIDEO_BYTES) {
+            showComposeMediaStatus(
+              `⚠️ "${file.name}" > 25 MB. Upload ke Google Drive lalu tempel link-nya di kolom bawah.`
+            );
+            continue;
+          }
+
+          showComposeMediaStatus(`${progressPrefix}Mengunggah klip video "${file.name}" ke Google Drive...`);
+          try {
+            const videoBase64 = await readFileAsDataUrl(file);
+            const response = await fetch(GAS_WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                filename: file.name || `ldr_clip_${Date.now()}.mp4`,
+                fileName: file.name || `ldr_clip_${Date.now()}.mp4`,
+                mimeType: file.type || "video/mp4",
+                mediaType: "video",
+                base64: videoBase64
+              })
+            });
+            const result = await response.json();
+            if (result && (result.status === "ok" || result.status === "success") && result.url) {
+              const norm = normalizeMediaUrl(result.url, "video");
+              composeMediaList.push({
+                type: "video",
+                url: norm ? norm.url : result.url,
+                thumbUrl: result.thumbUrl || (norm ? norm.thumbUrl : ""),
+                caption: "",
+                backNote: ""
+              });
+              composeSelectedMediaIdx = composeMediaList.length - 1;
+              showComposeMediaStatus(`✓ Klip video berhasil tersimpan di Google Drive!`);
+            } else {
+              throw new Error(result.message || "Gagal mengunggah video");
+            }
+          } catch (err) {
+            console.warn("Upload video GDrive gagal:", err);
+            showComposeMediaStatus(
+              `⚠️ Gagal upload langsung video ini. Coba upload ke Google Drive & tempel link-nya.`
+            );
+          }
+        } else {
+          showComposeMediaStatus(`${progressPrefix}Mengompresi & mengunggah foto...`);
+          try {
+            const compressedBase64 = await compressImageFile(file, 1200, 0.82);
+            const response = await fetch(GAS_WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                filename: file.name || `ldr_photo_${Date.now()}.jpg`,
+                fileName: file.name || `ldr_photo_${Date.now()}.jpg`,
+                mimeType: "image/jpeg",
+                mediaType: "image",
+                base64: compressedBase64
+              })
+            });
+            const result = await response.json();
+            if (result && (result.status === "ok" || result.status === "success") && result.url) {
+              composeMediaList.push({
+                type: "image",
+                url: result.url,
+                thumbUrl: result.url,
+                caption: "",
+                backNote: ""
+              });
+              composeSelectedMediaIdx = composeMediaList.length - 1;
+              showComposeMediaStatus(`✓ Foto berhasil tersimpan di Google Drive!`);
+            } else {
+              throw new Error(result.message || "Respons Google Script tidak valid");
+            }
+          } catch (err) {
+            console.warn("Upload GDrive gagal, memakai foto terkompresi langsung:", err);
+            const fallbackBase64 = await compressImageFile(file, 850, 0.72);
+            composeMediaList.push({
+              type: "image",
+              url: fallbackBase64,
+              thumbUrl: fallbackBase64,
+              caption: "",
+              backNote: ""
+            });
+            composeSelectedMediaIdx = composeMediaList.length - 1;
+            showComposeMediaStatus(`✓ Foto siap diselipkan ke dalam amplop`);
+          }
+        }
+        renderComposeMediaManager();
+      }
+    };
+
+    window.addMediaFromLinkInput = function () {
+      const inputEl = document.getElementById("photoDirectUrlInput");
+      const rawVal = (inputEl?.value || "").trim();
+      if (!rawVal) return;
+
+      if (composeMediaList.length >= MAX_MEDIA_PER_LETTER) {
+        showComposeMediaStatus("Maksimal 5 foto/video per surat sudah tercapai.");
+        return;
+      }
+
+      const norm = normalizeMediaUrl(rawVal, composeLinkMediaType);
+      if (!norm) return;
+
+      composeMediaList.push({
+        type: norm.type,
+        url: norm.url,
+        thumbUrl: norm.thumbUrl || "",
+        caption: "",
+        backNote: ""
+      });
+      composeSelectedMediaIdx = composeMediaList.length - 1;
+      inputEl.value = "";
+      showComposeMediaStatus(
+        norm.type === "video"
+          ? `✓ Link video ditambahkan (${composeMediaList.length}/${MAX_MEDIA_PER_LETTER})`
+          : `✓ Link foto ditambahkan (${composeMediaList.length}/${MAX_MEDIA_PER_LETTER})`
+      );
+      renderComposeMediaManager();
+    };
+
+    function showComposeMediaStatus(msg) {
+      const statusBox = document.getElementById("photoUploadStatusBox");
+      const statusText = document.getElementById("photoUploadStatusText");
+      if (!statusBox || !statusText) return;
+      statusBox.classList.remove("hidden");
+      statusText.textContent = msg;
+    }
+
+    window.selectComposeMediaItem = function (idx) {
+      if (idx < 0 || idx >= composeMediaList.length) return;
+      composeSelectedMediaIdx = idx;
+      renderComposeMediaManager();
+    };
+
+    window.removeComposeMediaItem = function (event, idx) {
+      event.stopPropagation();
+      composeMediaList.splice(idx, 1);
+      if (composeSelectedMediaIdx >= composeMediaList.length) {
+        composeSelectedMediaIdx = Math.max(0, composeMediaList.length - 1);
+      }
+      renderComposeMediaManager();
+    };
+
+    window.moveComposeMediaItem = function (event, idx, delta) {
+      event.stopPropagation();
+      const target = idx + delta;
+      if (target < 0 || target >= composeMediaList.length) return;
+      const temp = composeMediaList[idx];
+      composeMediaList[idx] = composeMediaList[target];
+      composeMediaList[target] = temp;
+      composeSelectedMediaIdx = target;
+      renderComposeMediaManager();
+    };
+
+    window.updateSelectedMediaMeta = function () {
+      if (composeMediaList.length === 0) return;
+      const item = composeMediaList[composeSelectedMediaIdx];
+      if (!item) return;
+      item.caption = document.getElementById("photoCaptionInput").value;
+      item.backNote = document.getElementById("photoBackNoteInput").value;
+    };
+
+    function renderComposeMediaManager() {
+      const countBadge = document.getElementById("mediaCountBadge");
+      const clearBtn = document.getElementById("clearPhotoBtn");
+      const stripEl = document.getElementById("composeMediaStrip");
+      const extraFields = document.getElementById("photoExtraFields");
+      const editingLabel = document.getElementById("editingMediaItemLabel");
+      const captionInput = document.getElementById("photoCaptionInput");
+      const backNoteInput = document.getElementById("photoBackNoteInput");
+
+      if (countBadge) {
+        countBadge.textContent = `${composeMediaList.length}/${MAX_MEDIA_PER_LETTER}`;
+      }
+
+      if (composeMediaList.length === 0) {
+        if (clearBtn) clearBtn.classList.add("hidden");
+        if (stripEl) {
+          stripEl.classList.add("hidden");
+          stripEl.innerHTML = "";
+        }
+        if (extraFields) extraFields.classList.add("hidden");
+        renderComposeEnvelopePreview();
+        return;
+      }
+
+      if (clearBtn) clearBtn.classList.remove("hidden");
+      if (stripEl) {
+        stripEl.classList.remove("hidden");
+        stripEl.innerHTML = composeMediaList
+          .map((item, idx) => {
+            const isSelected = idx === composeSelectedMediaIdx;
+            const ringCls = isSelected
+              ? "ring-2 ring-[#7E2622] dark:ring-[#B8955A] scale-[1.02]"
+              : "opacity-80 hover:opacity-100";
+            const thumbVisual =
+              item.type === "video"
+                ? (item.thumbUrl
+                    ? `<img src="${escapeHtml(item.thumbUrl)}" class="w-full h-full object-cover" /><span class="absolute inset-0 flex items-center justify-center bg-black/35 text-white text-xs">▶</span>`
+                    : `<div class="w-full h-full bg-[#231F1D] text-[#FAF6EE] flex flex-col items-center justify-center text-[10px]"><span>▶</span><span>Video</span></div>`)
+                : `<img src="${escapeHtml(item.url)}" class="w-full h-full object-cover" />`;
+
+            return `
+              <div onclick="selectComposeMediaItem(${idx})"
+                   class="relative w-16 h-20 rounded-lg bg-white dark:bg-black/40 border border-black/15 dark:border-white/15 overflow-hidden shrink-0 cursor-pointer transition ${ringCls}">
+                ${thumbVisual}
+                <span class="absolute top-1 left-1 px-1 rounded bg-black/65 text-white text-[9px] font-mono">#${idx + 1}</span>
+                <button type="button" onclick="removeComposeMediaItem(event, ${idx})"
+                        class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-600 text-white text-[9px] flex items-center justify-center hover:bg-red-700" title="Hapus item">✕</button>
+                <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white flex items-center justify-between px-1 py-0.5 text-[9px]">
+                  <button type="button" onclick="moveComposeMediaItem(event, ${idx}, -1)" class="${idx === 0 ? "opacity-25 pointer-events-none" : "hover:text-amber-300"}">‹</button>
+                  <span>${item.type === "video" ? "🎬" : "📷"}</span>
+                  <button type="button" onclick="moveComposeMediaItem(event, ${idx}, 1)" class="${idx === composeMediaList.length - 1 ? "opacity-25 pointer-events-none" : "hover:text-amber-300"}">›</button>
+                </div>
+              </div>`;
+          })
+          .join("");
+      }
+
+      if (extraFields) {
+        extraFields.classList.remove("hidden");
+        const activeItem = composeMediaList[composeSelectedMediaIdx] || composeMediaList[0];
+        if (editingLabel) {
+          editingLabel.textContent = `Detail Kartu #${composeSelectedMediaIdx + 1} (${activeItem.type === "video" ? "Video" : "Foto"})`;
+        }
+        if (captionInput) captionInput.value = activeItem.caption || "";
+        if (backNoteInput) backNoteInput.value = activeItem.backNote || "";
+      }
+
+      renderComposeEnvelopePreview();
+    }
+
+    window.clearSelectedPhoto = function () {
+      composeMediaList = [];
+      composeSelectedMediaIdx = 0;
+      const fileInput = document.getElementById("photoFileInput");
+      const urlInput = document.getElementById("photoDirectUrlInput");
+      const capInput = document.getElementById("photoCaptionInput");
+      const noteInput = document.getElementById("photoBackNoteInput");
+      const statusBox = document.getElementById("photoUploadStatusBox");
+      if (fileInput) fileInput.value = "";
+      if (urlInput) urlInput.value = "";
+      if (capInput) capInput.value = "";
+      if (noteInput) noteInput.value = "";
+      if (statusBox) statusBox.classList.add("hidden");
+      renderComposeMediaManager();
+    };
+
+    /***************************************************************************
+     * 9. COMPOSE NEW LETTER MODAL & SILENT ENVELOPE SHUFFLE
+     ***************************************************************************/
+    function toLocalDatetimeInputValue(dateObj) {
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}T${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+    }
+
+    window.updateComposeCharCounter = function () {
+      const bodyEl = document.getElementById("composeBody");
+      const counterEl = document.getElementById("composeCharCounter");
+      if (!bodyEl || !counterEl) return;
+      const len = bodyEl.value.length;
+      counterEl.textContent = `${len.toLocaleString("id-ID")} karakter`;
+    };
+
+    window.openComposeModal = function () {
+      composeMotifIndex = Math.floor(Math.random() * 50);
+      clearSelectedPhoto();
+      setComposeLinkMediaType("video");
+
+      document.getElementById("composeUnlockAt").value = "";
+      updateComposeCharCounter();
+
+      const modal = document.getElementById("composeModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      renderEnvelopeSwatchStrip();
+      syncEnvelopeStyleUI();
+    };
+
+    window.closeComposeModal = function () {
+      const modal = document.getElementById("composeModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    };
+
+    window.setEnvelopeStyleIndex = function (idx) {
+      composeMotifIndex = ((parseInt(idx, 10) || 0) % 50 + 50) % 50;
+      syncEnvelopeStyleUI();
+    };
+
+    window.stepEnvelopeStyle = function (delta) {
+      composeMotifIndex = (composeMotifIndex + delta + 50) % 50;
+      syncEnvelopeStyleUI();
+    };
+
+    window.randomizeEnvelopeStyle = function () {
+      let nextIdx = Math.floor(Math.random() * 50);
+      if (nextIdx === composeMotifIndex) {
+        nextIdx = (nextIdx + 7) % 50;
+      }
+      composeMotifIndex = nextIdx;
+      syncEnvelopeStyleUI();
+    };
+
+    function renderEnvelopeSwatchStrip() {
+      const stripEl = document.getElementById("envelopeSwatchStrip");
+      if (!stripEl) return;
+
+      let html = "";
+      for (let i = 0; i < 50; i++) {
+        const s = getMotifStyle(i);
+        html += `
+          <button type="button" id="env-swatch-${i}" onclick="setEnvelopeStyleIndex(${i})"
+                  title="${s.paper.name} · ${s.stamp.label}"
+                  class="w-7 h-5 rounded-[3px] shrink-0 relative border transition-all duration-150 flex items-center justify-center overflow-hidden"
+                  style="background-color: ${s.paper.bg}; border-color: ${s.paper.border};">
+            ${s.paper.airmail ? `<span class="absolute inset-x-0 top-0 h-[2px] bg-[#7E2622]"></span>` : ""}
+            <span class="w-2 h-2 rounded-full shadow-xs" style="background-color: ${s.stamp.wax};"></span>
+          </button>`;
+      }
+      stripEl.innerHTML = html;
+    }
+
+    function syncEnvelopeStyleUI() {
+      const style = getMotifStyle(composeMotifIndex);
+      const finishEl = document.getElementById("composePaperFinishName");
+      const sliderEl = document.getElementById("envelopeStyleSlider");
+
+      if (finishEl) {
+        finishEl.textContent = `${style.paper.name} · ${style.stamp.label}`;
+      }
+      if (sliderEl) {
+        sliderEl.value = String(composeMotifIndex);
+      }
+
+      for (let i = 0; i < 50; i++) {
+        const btn = document.getElementById(`env-swatch-${i}`);
+        if (!btn) continue;
+        if (i === composeMotifIndex) {
+          btn.classList.add("ring-2", "ring-[#7E2622]", "dark:ring-[#B8955A]", "scale-110", "z-10");
+          btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        } else {
+          btn.classList.remove("ring-2", "ring-[#7E2622]", "dark:ring-[#B8955A]", "scale-110", "z-10");
+        }
+      }
+
+      renderComposeEnvelopePreview();
+    }
+
+    window.setUnlockOffset = function (daysOffset) {
+      if (daysOffset === 0) {
+        document.getElementById("composeUnlockAt").value = "";
+        renderComposeEnvelopePreview();
+        return;
+      }
+      const d = new Date();
+      d.setDate(d.getDate() + daysOffset);
+      document.getElementById("composeUnlockAt").value = toLocalDatetimeInputValue(d);
+      renderComposeEnvelopePreview();
+    };
+
+    window.renderComposeEnvelopePreview = function () {
+      const container = document.getElementById("composeEnvelopePreview");
+      if (!container) return;
+
+      const toVal = document.getElementById("composeTo").value.trim() || "Pasanganku";
+      const fromVal = document.getElementById("composeFrom").value.trim() || "Aku";
+      const unlockStr = document.getElementById("composeUnlockAt").value;
+      const unlockTs = unlockStr ? new Date(unlockStr).getTime() : Date.now();
+
+      const mockLetter = {
+        id: "preview-card",
+        to: toVal,
+        from: fromVal,
+        createdAt: Date.now(),
+        unlockAt: unlockTs,
+        motifIndex: composeMotifIndex,
+        media: composeMediaList
+      };
+
+      container.innerHTML = buildEnvelopeFrontHtml(mockLetter, true);
+    };
+
+    window.submitNewLetter = async function (event) {
+      event.preventDefault();
+      const toVal = document.getElementById("composeTo").value.trim();
+      const fromVal = document.getElementById("composeFrom").value.trim();
+      const bodyVal = document.getElementById("composeBody").value.trim();
+      const unlockStr = document.getElementById("composeUnlockAt").value;
+      const unlockTs = unlockStr ? new Date(unlockStr).getTime() : Date.now();
+
+      if (!toVal || !fromVal || !bodyVal) return;
+
+      // Capture any typed link still sitting in the URL input box before submitting
+      const pendingLink = (document.getElementById("photoDirectUrlInput")?.value || "").trim();
+      if (pendingLink && composeMediaList.length < MAX_MEDIA_PER_LETTER) {
+        const norm = normalizeMediaUrl(pendingLink, composeLinkMediaType);
+        if (norm) {
+          composeMediaList.push({
+            type: norm.type,
+            url: norm.url,
+            thumbUrl: norm.thumbUrl || "",
+            caption: "",
+            backNote: ""
+          });
+        }
+      }
+
+      const cleanedMedia = composeMediaList.slice(0, MAX_MEDIA_PER_LETTER).map(m => ({
+        type: m.type === "video" ? "video" : "image",
+        url: m.url,
+        thumbUrl: m.thumbUrl || "",
+        caption: (m.caption || "").trim(),
+        backNote: (m.backNote || "").trim()
+      }));
+
+      const firstMedia = cleanedMedia[0] || null;
+      const centerWorldX = Math.round(-camX / camZoom - 138 + (Math.random() * 80 - 40));
+      const centerWorldY = Math.round(-camY / camZoom - 92 + (Math.random() * 60 - 30));
+      const randomTilt = +((Math.random() * 4.4) - 2.2).toFixed(2);
+
+      const newLetter = {
+        id: "letter_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
+        to: toVal,
+        from: fromVal,
+        body: bodyVal,
+        createdAt: Date.now(),
+        unlockAt: unlockTs,
+        worldX: centerWorldX,
+        worldY: centerWorldY,
+        tilt: randomTilt,
+        motifIndex: composeMotifIndex,
+        media: cleanedMedia,
+        photoUrl: firstMedia ? firstMedia.url : "",
+        photoCaption: firstMedia ? firstMedia.caption : "",
+        photoBackNote: firstMedia ? firstMedia.backNote : ""
+      };
+
+      document.getElementById("composeBody").value = "";
+      updateComposeCharCounter();
+      closeComposeModal();
+
+      await saveLetterToCloud(newLetter);
+      renderAllEnvelopesOnCanvas();
+      renderDirectoryList();
+    };
+
+    /***************************************************************************
+     * 10. DIRECTORY DRAWER & PER-CODE CROSS-DEVICE READ HISTORY
+     ***************************************************************************/
+    function sanitizeReaderCode(code) {
+      return String(code || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[.#$\[\]\/\\]/g, "_");
+    }
+
+    function subscribeReadHistoryForCode(rawCode) {
+      if (unsubscribeReadHistory) {
+        unsubscribeReadHistory();
+        unsubscribeReadHistory = null;
+      }
+
+      const safeKey = sanitizeReaderCode(rawCode);
+      if (!safeKey) {
+        readHistoryMap = {};
+        syncReaderCodeUI();
+        renderDirectoryList();
+        return;
+      }
+
+      try {
+        const cached = localStorage.getItem(`ldr_read_cache_${safeKey}`);
+        readHistoryMap = cached ? JSON.parse(cached) : {};
+      } catch (e) {
+        readHistoryMap = {};
+      }
+      syncReaderCodeUI();
+      renderDirectoryList();
+
+      const historyRef = ref(db, `kapsul_surat_ldr/read_history/${safeKey}`);
+      unsubscribeReadHistory = onValue(historyRef, (snap) => {
+        readHistoryMap = snap.val() || {};
+        try {
+          localStorage.setItem(`ldr_read_cache_${safeKey}`, JSON.stringify(readHistoryMap));
+        } catch (e) {}
+        syncReaderCodeUI();
+        renderDirectoryList();
+      }, (err) => {
+        console.warn("Gagal sinkronisasi riwayat baca:", err);
+      });
+    }
+
+    async function markLetterAsReadForActiveCode(letterId) {
+      const safeKey = sanitizeReaderCode(activeReaderCode);
+      if (!safeKey || !letterId) return;
+
+      const payload = { readAt: Date.now() };
+      readHistoryMap[letterId] = payload;
+      try {
+        localStorage.setItem(`ldr_read_cache_${safeKey}`, JSON.stringify(readHistoryMap));
+      } catch (e) {}
+      syncReaderCodeUI();
+      renderDirectoryList();
+
+      try {
+        await set(ref(db, `kapsul_surat_ldr/read_history/${safeKey}/${letterId}`), payload);
+      } catch (err) {
+        console.warn("Gagal mencatat status dibaca ke Firebase:", err);
+      }
+    }
+
+    window.toggleLetterReadStatus = async function (event, letterId) {
+      event.stopPropagation();
+      const safeKey = sanitizeReaderCode(activeReaderCode);
+      if (!safeKey || !letterId) return;
+
+      const alreadyRead = Boolean(readHistoryMap[letterId]);
+      if (alreadyRead) {
+        delete readHistoryMap[letterId];
+        try {
+          localStorage.setItem(`ldr_read_cache_${safeKey}`, JSON.stringify(readHistoryMap));
+        } catch (e) {}
+        syncReaderCodeUI();
+        renderDirectoryList();
+        try {
+          await remove(ref(db, `kapsul_surat_ldr/read_history/${safeKey}/${letterId}`));
+        } catch (e) {}
+      } else {
+        await markLetterAsReadForActiveCode(letterId);
+      }
+    };
+
+    window.activateReaderCode = function () {
+      const inputEl = document.getElementById("readerCodeInput");
+      const entered = (inputEl?.value || "").trim();
+      if (!entered) return;
+
+      activeReaderCode = entered;
+      localStorage.setItem("ldr_reader_code_v1", activeReaderCode);
+      directoryReadFilter = "all";
+      subscribeReadHistoryForCode(activeReaderCode);
+      syncFcmTokenMetadata();
+    };
+
+    window.clearReaderCode = function () {
+      activeReaderCode = "";
+      localStorage.removeItem("ldr_reader_code_v1");
+      directoryReadFilter = "all";
+      const inputEl = document.getElementById("readerCodeInput");
+      if (inputEl) inputEl.value = "";
+      subscribeReadHistoryForCode("");
+      syncFcmTokenMetadata();
+    };
+
+    window.setDirectoryReadFilter = function (mode) {
+      directoryReadFilter = mode;
+      syncReaderCodeUI();
+      renderDirectoryList();
+    };
+
+    function syncReaderCodeUI() {
+      const formView = document.getElementById("readerCodeFormView");
+      const activeView = document.getElementById("readerCodeActiveView");
+      const codeLabel = document.getElementById("activeReaderCodeLabel");
+      const statsBadge = document.getElementById("readStatsSummaryBadge");
+      if (!formView || !activeView) return;
+
+      if (!activeReaderCode) {
+        formView.classList.remove("hidden");
+        activeView.classList.add("hidden");
+        return;
+      }
+
+      formView.classList.add("hidden");
+      activeView.classList.remove("hidden");
+      if (codeLabel) codeLabel.textContent = activeReaderCode;
+
+      const readCount = letters.filter(l => Boolean(readHistoryMap[l.id])).length;
+      const unreadCount = Math.max(0, letters.length - readCount);
+      if (statsBadge) {
+        statsBadge.textContent = `(${readCount} dibaca · ${unreadCount} belum)`;
+      }
+
+      ["all", "unread", "read"].forEach((tab) => {
+        const btn = document.getElementById(`filterTab-${tab}`);
+        if (!btn) return;
+        if (directoryReadFilter === tab) {
+          btn.className = "flex-1 py-1 px-2 rounded-lg font-medium transition bg-[#7E2622] text-[#FAF6EE]";
+        } else {
+          btn.className = "flex-1 py-1 px-2 rounded-lg font-medium transition hover:bg-black/5 dark:hover:bg-white/10";
+        }
+      });
+    }
+
+    window.toggleDirectoryDrawer = function () {
+      const drawer = document.getElementById("directoryDrawer");
+      drawer.classList.toggle("hidden");
+      if (!drawer.classList.contains("hidden")) {
+        syncReaderCodeUI();
+        renderDirectoryList();
+      }
+    };
+
+    window.renderDirectoryList = function () {
+      const listEl = document.getElementById("directoryListContainer");
+      const query = (document.getElementById("searchLetterInput")?.value || "").toLowerCase().trim();
+      if (!listEl) return;
+
+      const now = Date.now();
+      const hasCode = Boolean(activeReaderCode);
+
+      const filtered = letters.filter((l) => {
+        const isRead = Boolean(readHistoryMap[l.id]);
+        if (hasCode) {
+          if (directoryReadFilter === "read" && !isRead) return false;
+          if (directoryReadFilter === "unread" && isRead) return false;
+        }
+
+        if (!query) return true;
+        const isLocked = (l.unlockAt || 0) > now;
+        const matchOuter =
+          (l.to || "").toLowerCase().includes(query) ||
+          (l.from || "").toLowerCase().includes(query);
+
+        // Sealed letters can ONLY be searched by outer recipient/sender (never body or hidden notes)
+        if (isLocked) {
+          return matchOuter;
+        }
+
+        const mediaCaptions = getLetterMediaList(l).map(m => m.caption || "").join(" ").toLowerCase();
+        return (
+          matchOuter ||
+          (l.body || "").toLowerCase().includes(query) ||
+          mediaCaptions.includes(query)
+        );
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="py-6 text-center text-xs opacity-60 font-serif italic">Belum ada surat yang cocok</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered
+        .map((l) => {
+          const isLocked = (l.unlockAt || 0) > now;
+          const isRead = Boolean(readHistoryMap[l.id]);
+          const mediaItems = getLetterMediaList(l);
+          const pCnt = mediaItems.filter(m => m.type !== "video").length;
+          const vCnt = mediaItems.filter(m => m.type === "video").length;
+          const mediaSummaryParts = [];
+          if (pCnt > 0) mediaSummaryParts.push(`📷 ${pCnt}`);
+          if (vCnt > 0) mediaSummaryParts.push(`🎬 ${vCnt}`);
+
+          let badgeHtml = "";
+          if (hasCode && isRead) {
+            badgeHtml = `<span class="text-[10px] font-mono px-2 py-0.5 rounded-full shrink-0 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">✓ Sudah Dibaca</span>`;
+          } else if (isLocked) {
+            badgeHtml = `<span class="text-[10px] font-mono px-2 py-0.5 rounded-full shrink-0 bg-[#7E2622]/15 text-[#7E2622] dark:text-[#E8A598]">⏳ ${formatCountdownString(l.unlockAt)}</span>`;
+          } else if (hasCode) {
+            badgeHtml = `<span class="text-[10px] font-mono px-2 py-0.5 rounded-full shrink-0 bg-amber-500/20 text-amber-800 dark:text-amber-300">● Belum Dibaca</span>`;
+          } else {
+            badgeHtml = `<span class="text-[10px] font-mono px-2 py-0.5 rounded-full shrink-0 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">✦ Siap Dibuka</span>`;
+          }
+
+          const manualToggleBtn = hasCode
+            ? `<button type="button" onclick="toggleLetterReadStatus(event, '${l.id}')" title="${isRead ? 'Tandai belum dibaca' : 'Tandai sudah dibaca'}" class="w-6 h-6 rounded-full hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center text-[11px] opacity-60 hover:opacity-100 shrink-0">${isRead ? "↺" : "✓"}</button>`
+            : "";
+
+          return `
+            <div onclick="jumpToLetterFromDrawer('${l.id}')" role="button" tabindex="0"
+                 class="w-full text-left p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 border border-transparent hover:border-current/10 transition flex items-center justify-between gap-2 cursor-pointer">
+              <div class="min-w-0">
+                <div class="font-serif italic text-base font-medium truncate">
+                  To: ${escapeHtml(l.to)} <span class="text-xs not-italic opacity-60">← ${escapeHtml(l.from)}</span>
+                </div>
+                <div class="text-[10px] font-mono opacity-60 flex items-center gap-2">
+                  <span>${formatShortPostmarkDate(l.createdAt)}</span>
+                  ${mediaSummaryParts.length > 0 ? `<span>• ${mediaSummaryParts.join(" · ")}</span>` : ""}
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                ${badgeHtml}
+                ${manualToggleBtn}
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    };
+
+    window.jumpToLetterFromDrawer = function (letterId) {
+      const letter = letters.find(l => l.id === letterId);
+      if (!letter) return;
+      document.getElementById("directoryDrawer").classList.add("hidden");
+      const targetZ = window.innerWidth < 640 ? 0.9 : 1.05;
+      animateCameraTo((letter.worldX || 0) + 138, (letter.worldY || 0) + 92, targetZ);
+    };
+
+    /***************************************************************************
+     * 11. FIREBASE CLOUD MESSAGING (WEB PUSH WALAU CHROME DITUTUP TOTAL)
+     ***************************************************************************/
+    let activeFcmToken = localStorage.getItem("ldr_fcm_token_v1") || "";
+
+    function getFcmTokenDbKey(token) {
+      return "tok_" + String(token || "").replace(/[^a-zA-Z0-9_-]/g, "_").slice(-48);
+    }
+
+    async function syncFcmTokenMetadata(tokenOverride = null) {
+      const tok = tokenOverride || activeFcmToken;
+      if (!tok) return;
+      const key = getFcmTokenDbKey(tok);
+      try {
+        await set(ref(db, `kapsul_surat_ldr/fcm_tokens/${key}`), {
+          token: tok,
+          readerCode: activeReaderCode || "",
+          updatedAt: Date.now()
+        });
+      } catch (err) {
+        console.warn("Gagal menyimpan token FCM ke RTDB:", err);
+      }
+    }
+
+    async function removeFcmTokenFromDb(tokenToRemove) {
+      if (!tokenToRemove) return;
+      const key = getFcmTokenDbKey(tokenToRemove);
+      try {
+        await remove(ref(db, `kapsul_surat_ldr/fcm_tokens/${key}`));
+      } catch (err) {}
+    }
+
+    async function registerAndSyncFcmToken() {
+      if (!messaging || !("Notification" in window) || Notification.permission !== "granted") {
+        return null;
+      }
+
+      try {
+        let reg = swRegistration;
+        if (!reg && "serviceWorker" in navigator) {
+          reg = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
+          swRegistration = reg;
+        }
+
+        const token = await getToken(messaging, {
+          vapidKey: VAPID_PUBLIC_KEY,
+          serviceWorkerRegistration: reg
+        });
+
+        if (token) {
+          activeFcmToken = token;
+          localStorage.setItem("ldr_fcm_token_v1", token);
+          localStorage.setItem("ldr_browser_notif_enabled", "true");
+          await syncFcmTokenMetadata(token);
+          return token;
+        }
+      } catch (err) {
+        console.warn("Gagal mengambil FCM token:", err);
+      }
+      return null;
+    }
+
+    async function initServiceWorkerForNotifications() {
+      if ("serviceWorker" in navigator) {
+        try {
+          swRegistration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
+        } catch (err) {
+          console.warn("Service Worker belum terdaftar:", err);
+        }
+      }
+
+      if (messaging) {
+        onMessage(messaging, (payload) => {
+          const title = payload?.notification?.title || "✉️ Kapsul Waktu";
+          const body = payload?.notification?.body || "Ada pembaruan surat baru di dinding.";
+          displayNativeChromeNotification(title, body, "ldr-fcm-foreground");
+        });
+      }
+
+      const isEnabled = localStorage.getItem("ldr_browser_notif_enabled") !== "false";
+      if ("Notification" in window && Notification.permission === "granted" && isEnabled) {
+        await registerAndSyncFcmToken();
+      }
+      updateBrowserNotifUI();
+    }
+
+    window.toggleNotifPopover = function () {
+      const pop = document.getElementById("notifPopover");
+      if (!pop) return;
+      pop.classList.toggle("hidden");
+      updateBrowserNotifUI();
+    };
+
+    function updateBrowserNotifUI() {
+      const dot = document.getElementById("notifStatusDot");
+      const desc = document.getElementById("notifPermissionDesc");
+      const btn = document.getElementById("enableBrowserNotifBtn");
+      if (!dot || !desc || !btn) return;
+
+      if (!("Notification" in window)) {
+        dot.className = "absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500";
+        desc.textContent = "Browser ini tidak mendukung notifikasi web bawaan.";
+        btn.disabled = true;
+        btn.textContent = "Tidak Didukung";
+        return;
+      }
+
+      const perm = Notification.permission;
+      const isEnabled = localStorage.getItem("ldr_browser_notif_enabled") !== "false";
+
+      if (perm === "granted" && isEnabled) {
+        dot.className = "absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.85)]";
+        desc.innerHTML = `<strong>✓ Background Push Aktif</strong> — Notifikasi Chrome tetap masuk walau browser ditutup tiap <strong>06:00 pagi</strong> &amp; <strong>18:00 sore</strong>${activeReaderCode ? ` (kode <code>${escapeHtml(activeReaderCode)}</code>)` : ""}.`;
+        btn.textContent = "Matikan Notif";
+      } else if (perm === "denied") {
+        dot.className = "absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500";
+        desc.textContent = "Izin notifikasi diblokir browser. Buka Pengaturan Situs di ikon gembok/info sebelah URL Chrome untuk mengizinkan Notifikasi.";
+        btn.textContent = "Izin Diblokir";
+      } else {
+        dot.className = "absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500";
+        desc.textContent = "Aktifkan izin notifikasi agar Chrome tetap mengirim kabar tiap jam 06:00 pagi dan 18:00 sore meskipun browser ditutup.";
+        btn.textContent = "Aktifkan Notif";
+      }
+    }
+
+    function buildSummaryNotificationPayload(slotLabel) {
+      const now = Date.now();
+      const twelveHoursMs = 12 * 60 * 60 * 1000;
+      const hasCode = Boolean(activeReaderCode);
+
+      let suratBaru12Jam = 0;
+      let belumDibaca = 0;
+      let siapDibukaBelumDibaca = 0;
+      let masihTersegel = 0;
+
+      letters.forEach((l) => {
+        const createdAt = Number(l.createdAt) || 0;
+        const unlockAt = Number(l.unlockAt) || 0;
+        const isLocked = unlockAt > now;
+        const isRead = hasCode ? Boolean(readHistoryMap[l.id]) : false;
+
+        if (now - createdAt <= twelveHoursMs) {
+          suratBaru12Jam++;
+        }
+        if (!isRead) {
+          belumDibaca++;
+          if (!isLocked) {
+            siapDibukaBelumDibaca++;
+          }
+        }
+        if (isLocked) {
+          masihTersegel++;
+        }
+      });
+
+      const wallName = localPrefs.wallTitle || "Kapsul Waktu";
+      const title = `✉️ Update ${slotLabel} — ${wallName}`;
+      const body = `${suratBaru12Jam} surat baru (12 jam terakhir) • ${belumDibaca} belum dibaca (${siapDibukaBelumDibaca} siap dibuka) • ${masihTersegel} tersegel.`;
+
+      return { title, body };
+    }
+
+    async function displayNativeChromeNotification(title, body, tag = "ldr-kapsul-summary") {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+      const options = {
+        body,
+        tag,
+        renotify: true,
+        badge: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='50' font-size='48'>✉️</text></svg>",
+        icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%237E2622'/><text x='8' y='48' font-size='42'>✉️</text></svg>"
+      };
+
+      try {
+        if (swRegistration && swRegistration.showNotification) {
+          await swRegistration.showNotification(title, options);
+          return;
+        }
+        if ("serviceWorker" in navigator) {
+          const readyReg = await navigator.serviceWorker.ready;
+          if (readyReg && readyReg.showNotification) {
+            await readyReg.showNotification(title, options);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const n = new Notification(title, options);
+        n.onclick = () => {
+          window.focus();
+          n.close();
+        };
+      } catch (err) {}
+    }
+
+    function checkScheduledBrowserNotification() {
+      // Handled in background by Firebase Cloud Messaging + Google Apps Script
+    }
+
+    window.requestBrowserNotifPermission = async function () {
+      if (!("Notification" in window)) return;
+
+      const isEnabled = localStorage.getItem("ldr_browser_notif_enabled") !== "false";
+      if (Notification.permission === "granted" && isEnabled) {
+        localStorage.setItem("ldr_browser_notif_enabled", "false");
+        if (activeFcmToken) {
+          await removeFcmTokenFromDb(activeFcmToken);
+          try {
+            if (messaging) await deleteToken(messaging);
+          } catch (e) {}
+          activeFcmToken = "";
+          localStorage.removeItem("ldr_fcm_token_v1");
+        }
+        updateBrowserNotifUI();
+        return;
+      }
+
+      const btn = document.getElementById("enableBrowserNotifBtn");
+      if (btn) btn.textContent = "Mendaftarkan...";
+
+      const result = await Notification.requestPermission();
+      if (result === "granted") {
+        localStorage.setItem("ldr_browser_notif_enabled", "true");
+        const token = await registerAndSyncFcmToken();
+        updateBrowserNotifUI();
+
+        const { body } = buildSummaryNotificationPayload("Saat Ini");
+        await displayNativeChromeNotification(
+          token ? "🔔 Background Push Chrome Aktif" : "🔔 Notifikasi Browser Aktif",
+          `Notifikasi jam 06:00 & 18:00 aktif walau Chrome ditutup. ${body}`,
+          "ldr-notif-welcome"
+        );
+      } else {
+        updateBrowserNotifUI();
+      }
+    };
+
+    window.triggerTestBrowserNotification = async function () {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") {
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") {
+          updateBrowserNotifUI();
+          return;
+        }
+      }
+      localStorage.setItem("ldr_browser_notif_enabled", "true");
+      await registerAndSyncFcmToken();
+      updateBrowserNotifUI();
+
+      const { title, body } = buildSummaryNotificationPayload("Pratinjau");
+      await displayNativeChromeNotification(title, body, `ldr-test-${Date.now()}`);
+    };
+
+    /***************************************************************************
+     * 12. THEME TOGGLE & UTILITIES
+     ***************************************************************************/
+    function applySavedWallTheme() {
+      const body = document.body;
+      const sunIcon = document.getElementById("iconSunWall");
+      const moonIcon = document.getElementById("iconMoonWall");
+
+      if (localPrefs.wallTheme === "dark") {
+        body.classList.remove("wall-light");
+        body.classList.add("wall-dark", "dark");
+        sunIcon.classList.remove("hidden");
+        moonIcon.classList.add("hidden");
+      } else {
+        body.classList.remove("wall-dark", "dark");
+        body.classList.add("wall-light");
+        sunIcon.classList.add("hidden");
+        moonIcon.classList.remove("hidden");
+      }
+    }
+
+    window.toggleWallTheme = function () {
+      localPrefs.wallTheme = localPrefs.wallTheme === "dark" ? "light" : "dark";
+      saveLocalPrefs();
+      applySavedWallTheme();
+    };
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    /***************************************************************************
+     * 13. INITIALIZE ON LOAD
+     ***************************************************************************/
+    window.addEventListener("DOMContentLoaded", () => {
+      applySavedWallTheme();
+      renderWallTitleUI();
+      applyCameraTransform();
+      initServiceWorkerForNotifications();
+      initRealtimeDatabaseSync();
+      if (activeReaderCode) {
+        subscribeReadHistoryForCode(activeReaderCode);
+      }
+    });
+  </script>
+</body>
+</html>
