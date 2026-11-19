@@ -678,45 +678,76 @@
             </div>
           </div>
 
-          <!-- Selipkan Foto Kenangan (Google Drive + Apps Script Upload) -->
+          <!-- Selipkan Foto & Video Kenangan (Maksimal 5 Item per Surat) -->
           <div class="p-3.5 sm:p-4 rounded-xl bg-[#EFEAE0] dark:bg-[#151312] border border-black/10 dark:border-white/10 space-y-3">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between gap-2">
               <label class="text-xs font-semibold flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-[#7E2622] dark:text-[#B8955A]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-[#7E2622] dark:text-[#B8955A] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                 </svg>
-                <span>Selipkan Foto Kenangan (Opsional)</span>
+                <span>Foto / Klip Video <span id="mediaCountBadge" class="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-black/10 dark:bg-white/10 ml-0.5">0/5</span></span>
               </label>
-              <button type="button" id="clearPhotoBtn" onclick="clearSelectedPhoto()" class="hidden text-[11px] text-red-600 hover:underline">Hapus Foto</button>
+              <button type="button" id="clearPhotoBtn" onclick="clearSelectedPhoto()" class="hidden text-[11px] text-red-600 hover:underline shrink-0">Hapus Semua</button>
             </div>
 
-            <!-- Upload / URL Controls -->
+            <!-- Upload File Controls (Supports up to 5 Photos or Short Videos <= 25MB) -->
             <div class="flex gap-2">
-              <label class="flex-1 py-2.5 px-3 rounded-xl bg-white dark:bg-white/5 hover:bg-black/5 border border-black/15 dark:border-white/15 text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <label id="uploadMediaLabelWrapper" class="flex-1 py-2.5 px-3 rounded-xl bg-white dark:bg-white/5 hover:bg-black/5 border border-black/15 dark:border-white/15 text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                 </svg>
-                <span id="uploadBtnLabel">Pilih File Foto</span>
-                <input type="file" id="photoFileInput" accept="image/*" class="hidden" onchange="handlePhotoFileSelect(event)" />
+                <span id="uploadBtnLabel">Upload Foto / Klip Video (≤ 25 MB)</span>
+                <input type="file" id="photoFileInput" accept="image/*,video/*" multiple class="hidden" onchange="handleMediaFilesSelect(event)" />
               </label>
             </div>
 
-            <input type="text" id="photoDirectUrlInput" oninput="handlePhotoUrlInput()" placeholder="Atau tempel link foto / Google Drive..." class="w-full px-3 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none" />
+            <!-- Paste Link Controls (Unlimited Video Size via Google Drive / YouTube / MP4 / Photo Link) -->
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-1.5">
+                <div class="flex rounded-lg bg-white/80 dark:bg-black/30 p-0.5 border border-black/15 dark:border-white/15 shrink-0 text-[11px]">
+                  <button type="button" id="linkTypeBtn-video" onclick="setComposeLinkMediaType('video')"
+                          class="px-2 py-1 rounded-md font-medium bg-[#7E2622] text-[#FAF6EE] transition">
+                    🎬 Video
+                  </button>
+                  <button type="button" id="linkTypeBtn-image" onclick="setComposeLinkMediaType('image')"
+                          class="px-2 py-1 rounded-md font-medium opacity-75 hover:opacity-100 transition">
+                    📷 Foto
+                  </button>
+                </div>
+                <input type="text" id="photoDirectUrlInput"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();addMediaFromLinkInput();}"
+                       placeholder="Tempel link Google Drive / YouTube / .mp4..."
+                       class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none" />
+                <button type="button" onclick="addMediaFromLinkInput()"
+                        class="px-2.5 py-1.5 rounded-lg bg-[#231F1D] dark:bg-[#B8955A] text-[#FAF6EE] dark:text-[#161514] text-xs font-medium shrink-0 hover:opacity-90 transition">
+                  + Tambah
+                </button>
+              </div>
+              <p class="text-[10px] opacity-60 leading-snug">
+                Video besar (&gt; 25 MB) tetap tajam 100% jika diunggah ke Google Drive lalu ditempel link berbaginya di sini.
+              </p>
+            </div>
 
             <!-- Upload Progress / Status -->
             <div id="photoUploadStatusBox" class="hidden text-[11px] px-2.5 py-1.5 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-between">
-              <span id="photoUploadStatusText">Menyiapkan foto...</span>
+              <span id="photoUploadStatusText">Menyiapkan media...</span>
             </div>
 
-            <!-- Extra Photo Details (Shown when photo is attached) -->
+            <!-- Horizontal Thumbnail Strip for Added Media Items (Up to 5) -->
+            <div id="composeMediaStrip" class="hidden flex items-center gap-2 overflow-x-auto py-1"></div>
+
+            <!-- Per-Item Caption & Secret Back Note (Edits currently selected item in strip) -->
             <div id="photoExtraFields" class="hidden space-y-2 pt-2 border-t border-black/10 dark:border-white/10">
-              <div>
-                <label class="block text-[11px] opacity-75 mb-0.5">Caption di Depan Polaroid</label>
-                <input type="text" id="photoCaptionInput" maxlength="45" placeholder="Misal: Sore itu di stasiun..." class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none" />
+              <div class="flex items-center justify-between">
+                <span id="editingMediaItemLabel" class="text-[10px] font-mono uppercase tracking-wider opacity-65">Detail Kartu #1</span>
               </div>
               <div>
-                <label class="block text-[11px] opacity-75 mb-0.5">Catatan Rahasia di Balik Foto (Bisa dibalik 3D)</label>
-                <textarea id="photoBackNoteInput" rows="2" maxlength="600" placeholder="Tulis pesan rahasia di bagian belakang kertas foto..." class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none resize-none"></textarea>
+                <label class="block text-[11px] opacity-75 mb-0.5">Caption di Depan Polaroid</label>
+                <input type="text" id="photoCaptionInput" maxlength="45" oninput="updateSelectedMediaMeta()" placeholder="Misal: Sore itu di stasiun..." class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] opacity-75 mb-0.5">Catatan Rahasia di Balik Kartu (Bisa dibalik 3D)</label>
+                <textarea id="photoBackNoteInput" rows="2" maxlength="600" oninput="updateSelectedMediaMeta()" placeholder="Tulis pesan rahasia di bagian belakang kartu ini..." class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-black/30 border border-black/15 dark:border-white/15 text-base sm:text-xs focus:outline-none resize-none"></textarea>
               </div>
             </div>
           </div>
@@ -804,9 +835,17 @@
             <div class="text-[9px] font-serif italic opacity-50 text-right">Membentangkan surat...</div>
           </div>
 
-          <!-- Rising Tucked Polaroid Card -->
+          <!-- Rising Tucked Polaroid Card (Supports Photo, Video Thumbnail, and Multi-Item Stack Badge) -->
           <div id="actorRisingPolaroid" class="rising-polaroid-card hidden bg-[#FAF7F0] p-1.5 pb-4 rounded-[2px] shadow-xl border border-black/15">
-            <img id="actorRisingPolaroidImg" src="" alt="Kenangan" class="w-full h-full object-cover rounded-[1px]" />
+            <div class="w-full h-full relative overflow-hidden rounded-[1px] bg-[#1E1B19]">
+              <img id="actorRisingPolaroidImg" src="" alt="Kenangan" class="w-full h-full object-cover" />
+              <div id="actorRisingVideoBadge" class="hidden absolute inset-0 flex items-center justify-center bg-black/35 text-white">
+                <span class="w-8 h-8 rounded-full bg-black/65 border border-white/40 flex items-center justify-center text-xs pl-0.5">▶</span>
+              </div>
+            </div>
+            <span id="actorRisingStackBadge" class="hidden absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-[#7E2622] text-[#FAF6EE] text-[9px] font-mono shadow">
+              +1
+            </span>
           </div>
 
           <!-- Envelope Side & Bottom Flaps -->
@@ -869,33 +908,57 @@
           </div>
         </div>
 
-        <!-- Attached Polaroid Column (3D Flip Front Photo <-> Back Secret Note) -->
-        <div id="tablePhotoColumn" class="hidden w-full max-w-[300px] flex flex-col items-center justify-center shrink-0 lg:sticky lg:top-6 lg:self-start">
-          <div class="polaroid-flip-scene w-[264px] sm:w-[272px] h-[330px] sm:h-[340px] cursor-pointer" onclick="toggleFlipPolaroid()" title="Ketuk foto untuk membalik dan membaca catatan di belakangnya">
+        <!-- Attached Polaroid Carousel Column (Up to 5 Photos/Videos + 3D Flip Secret Note) -->
+        <div id="tablePhotoColumn" class="hidden w-full max-w-[310px] flex flex-col items-center justify-center shrink-0 lg:sticky lg:top-6 lg:self-start space-y-3">
+          
+          <!-- Carousel Top Counter & Navigation (Shown when >1 item) -->
+          <div id="polaroidCarouselHeader" class="hidden w-[272px] sm:w-[284px] flex items-center justify-between px-2 py-1 rounded-full bg-white/10 text-[#FAF6EE] text-xs">
+            <button type="button" onclick="stepReadingMedia(-1)" class="w-7 h-7 rounded-full hover:bg-white/15 flex items-center justify-center transition" title="Media Sebelumnya">‹</button>
+            <div class="flex items-center gap-2">
+              <span id="polaroidCarouselCounter" class="font-mono text-[11px]">1 / 1</span>
+              <div id="polaroidCarouselDots" class="flex items-center gap-1"></div>
+            </div>
+            <button type="button" onclick="stepReadingMedia(1)" class="w-7 h-7 rounded-full hover:bg-white/15 flex items-center justify-center transition" title="Media Berikutnya">›</button>
+          </div>
+
+          <div id="polaroidSwipeArea" class="polaroid-flip-scene w-[272px] sm:w-[284px] h-[346px] sm:h-[358px]">
             <div id="polaroidFlipInner" class="polaroid-flip-inner">
               
-              <!-- Front Face: Polaroid Photo -->
-              <div class="polaroid-face-front bg-[#FAF7F0] text-[#231F1D] p-3 pb-5 rounded-[4px] shadow-2xl border border-black/15 flex flex-col justify-between">
-                <div class="w-full h-[234px] sm:h-[242px] bg-black/5 overflow-hidden rounded-[2px] relative group">
-                  <img id="tablePhotoImg" src="" alt="Foto Kenangan" class="w-full h-full object-cover" />
-                  <button type="button" onclick="event.stopPropagation(); openHighResLightbox();" class="absolute bottom-2 right-2 px-2.5 py-1 rounded-md bg-black/65 text-white text-[10px] opacity-90 hover:opacity-100 transition">
+              <!-- Front Face: Polaroid Photo or Video Player -->
+              <div class="polaroid-face-front bg-[#FAF7F0] text-[#231F1D] p-3 pb-4 rounded-[4px] shadow-2xl border border-black/15 flex flex-col justify-between">
+                <div id="tableMediaViewport" class="w-full h-[238px] sm:h-[248px] bg-[#161514] overflow-hidden rounded-[2px] relative group">
+                  <!-- Image View -->
+                  <img id="tablePhotoImg" src="" alt="Foto Kenangan" onclick="toggleFlipPolaroid()" class="w-full h-full object-cover cursor-pointer" />
+                  <!-- Iframe Video View (Google Drive / YouTube) -->
+                  <iframe id="tableVideoIframe" src="" class="hidden w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                  <!-- Native HTML5 Video View (.mp4 / .webm / .mov) -->
+                  <video id="tableVideoNative" src="" controls playsinline preload="metadata" class="hidden w-full h-full object-contain bg-black"></video>
+
+                  <!-- Fullscreen Lightbox Button (for Images) -->
+                  <button type="button" id="tableLightboxBtn" onclick="event.stopPropagation(); openHighResLightbox();" class="absolute bottom-2 right-2 px-2.5 py-1 rounded-md bg-black/65 text-white text-[10px] opacity-90 hover:opacity-100 transition">
                     Perbesar
                   </button>
                 </div>
-                <div class="pt-2 text-center">
+
+                <!-- Polaroid Bottom Caption & Dedicated 3D Flip Trigger -->
+                <div onclick="toggleFlipPolaroid()" class="pt-2 text-center cursor-pointer select-none">
                   <p id="tablePhotoCaption" class="font-hand text-xl leading-tight truncate">Kenangan kita</p>
-                  <span class="text-[10px] font-mono opacity-45">Ketuk untuk balik foto ↻</span>
+                  <button type="button" onclick="event.stopPropagation(); toggleFlipPolaroid();" class="mt-0.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/5 hover:bg-black/10 text-[10px] font-mono opacity-75 hover:opacity-100 transition">
+                    <span>↻ Balik kartu (catatan rahasia)</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- Back Face: Secret Handwritten Note on Back of Photo -->
-              <div class="polaroid-face-back bg-[#F2ECE1] text-[#231F1D] p-5 rounded-[4px] shadow-2xl border border-black/15 paper-grain flex flex-col justify-between">
-                <div class="text-[10px] font-mono uppercase tracking-widest opacity-45 border-b border-black/10 pb-2">
-                  Catatan di Balik Foto
+              <!-- Back Face: Secret Handwritten Note on Back of Card -->
+              <div onclick="toggleFlipPolaroid()" class="polaroid-face-back bg-[#F2ECE1] text-[#231F1D] p-5 rounded-[4px] shadow-2xl border border-black/15 paper-grain flex flex-col justify-between cursor-pointer">
+                <div id="tableBackNoteHeader" class="text-[10px] font-mono uppercase tracking-widest opacity-45 border-b border-black/10 pb-2">
+                  Catatan di Balik Kartu
                 </div>
-                <div class="my-auto max-h-[210px] overflow-y-auto px-1 flex items-center justify-center"><p id="tablePhotoBackNote" class="font-hand text-xl sm:text-2xl leading-snug text-center whitespace-pre-line text-[#2B221E]"></p></div>
-                <div class="text-center text-[10px] font-mono opacity-45 pt-2 border-t border-black/10">
-                  Ketuk lagi untuk melihat foto ↺
+                <div class="my-auto max-h-[220px] overflow-y-auto px-1 flex items-center justify-center">
+                  <p id="tablePhotoBackNote" class="font-hand text-xl sm:text-2xl leading-snug text-center whitespace-pre-line text-[#2B221E]"></p>
+                </div>
+                <div class="text-center text-[10px] font-mono opacity-60 pt-2 border-t border-black/10">
+                  Ketuk untuk kembali ke depan ↺
                 </div>
               </div>
 
@@ -1025,7 +1088,11 @@
     let letters = [];
     let activeLetterId = null;
     let composeMotifIndex = Math.floor(Math.random() * 50);
-    let composeUploadedPhotoUrl = "";
+    let composeMediaList = []; // Array of { type: 'image'|'video', url, thumbUrl, caption, backNote } (max 5)
+    let composeSelectedMediaIdx = 0;
+    let composeLinkMediaType = "video";
+    let activeReadingMediaList = [];
+    let activeReadingMediaIndex = 0;
     let isPolaroidFlipped = false;
     let isFirebaseLive = false;
 
@@ -1626,15 +1693,26 @@
       const isLocked = (letter.unlockAt || 0) > Date.now();
       const countdownStr = isLocked ? formatCountdownString(letter.unlockAt) : null;
       const postmarkDate = formatShortPostmarkDate(letter.createdAt || Date.now());
-      const hasPhoto = Boolean(letter.photoUrl && letter.photoUrl.trim());
+      const mediaItems = getLetterMediaList(letter);
+      const photoCount = mediaItems.filter(m => m.type !== "video").length;
+      const videoCount = mediaItems.filter(m => m.type === "video").length;
+      let mediaBadgeLabel = "";
+      if (mediaItems.length === 1) {
+        mediaBadgeLabel = videoCount === 1 ? "🎬 Video" : "📷 Foto";
+      } else if (mediaItems.length > 1) {
+        const parts = [];
+        if (photoCount > 0) parts.push(`📷 ${photoCount}`);
+        if (videoCount > 0) parts.push(`🎬 ${videoCount}`);
+        mediaBadgeLabel = parts.join(" · ");
+      }
 
       const outerFrameClass = paper.airmail ? "airmail-edge rounded-[3px] w-full h-full" : "w-full h-full";
 
-      // Subtle Polaroid Corner Peeking / Brass Paperclip Indicator if Photo Attached
-      const photoIndicatorHtml = hasPhoto
-        ? `<div class="absolute -top-1.5 left-4 z-20 flex items-center gap-1 bg-[#FAF7F0] text-[#231F1D] px-2 py-0.5 rounded-t-[2px] shadow-sm border border-black/15 -rotate-3" title="Ada foto terselip di dalam surat">
+      // Subtle Polaroid Corner Peeking / Brass Paperclip Indicator if Media Attached
+      const photoIndicatorHtml = mediaItems.length > 0
+        ? `<div class="absolute -top-1.5 left-4 z-20 flex items-center gap-1 bg-[#FAF7F0] text-[#231F1D] px-2 py-0.5 rounded-t-[2px] shadow-sm border border-black/15 -rotate-3" title="Ada ${mediaItems.length} lampiran foto/video di dalam surat">
              <span class="w-2 h-2 rounded-full bg-[#B8955A]"></span>
-             <span class="text-[9px] font-mono tracking-tighter uppercase opacity-75">Foto</span>
+             <span class="text-[9px] font-mono tracking-tighter uppercase opacity-80">${mediaBadgeLabel}</span>
            </div>`
         : "";
 
@@ -1881,12 +1959,39 @@
       document.getElementById("actorRisingSheet").classList.remove("slide-up");
 
       const risingPolaroid = document.getElementById("actorRisingPolaroid");
+      const risingPolaroidImg = document.getElementById("actorRisingPolaroidImg");
+      const risingVideoBadge = document.getElementById("actorRisingVideoBadge");
+      const risingStackBadge = document.getElementById("actorRisingStackBadge");
       risingPolaroid.classList.remove("slide-up");
 
-      const normalizedPhoto = normalizeGoogleDriveImageUrl(letter.photoUrl || "");
-      if (normalizedPhoto) {
+      activeReadingMediaList = getLetterMediaList(letter);
+      activeReadingMediaIndex = 0;
+
+      if (activeReadingMediaList.length > 0) {
+        const firstMedia = activeReadingMediaList[0];
         risingPolaroid.classList.remove("hidden");
-        document.getElementById("actorRisingPolaroidImg").src = normalizedPhoto;
+
+        if (firstMedia.type === "video") {
+          risingVideoBadge.classList.remove("hidden");
+          if (firstMedia.thumbUrl) {
+            risingPolaroidImg.src = firstMedia.thumbUrl;
+            risingPolaroidImg.classList.remove("hidden");
+          } else {
+            risingPolaroidImg.removeAttribute("src");
+            risingPolaroidImg.classList.add("hidden");
+          }
+        } else {
+          risingVideoBadge.classList.add("hidden");
+          risingPolaroidImg.src = firstMedia.url;
+          risingPolaroidImg.classList.remove("hidden");
+        }
+
+        if (activeReadingMediaList.length > 1) {
+          risingStackBadge.textContent = `+${activeReadingMediaList.length - 1}`;
+          risingStackBadge.classList.remove("hidden");
+        } else {
+          risingStackBadge.classList.add("hidden");
+        }
       } else {
         risingPolaroid.classList.add("hidden");
       }
@@ -1906,22 +2011,14 @@
       document.getElementById("tableLetterBody").textContent = letter.body || "";
       document.getElementById("tableSignature").textContent = letter.from || "Aku";
 
-      // Populate Tucked Photo & 3D Back-of-Photo Secret Note
+      // Populate Tucked Media Carousel & 3D Back-of-Card Secret Note
       const photoCol = document.getElementById("tablePhotoColumn");
-      const flipInner = document.getElementById("polaroidFlipInner");
-      flipInner.classList.remove("is-flipped");
-
-      if (normalizedPhoto) {
+      if (activeReadingMediaList.length > 0) {
         photoCol.classList.remove("hidden");
-        document.getElementById("tablePhotoImg").src = normalizedPhoto;
-        document.getElementById("lightboxImg").src = normalizedPhoto;
-        document.getElementById("tablePhotoCaption").textContent = letter.photoCaption || "Kenangan kita";
-        document.getElementById("tablePhotoBackNote").textContent =
-          letter.photoBackNote && letter.photoBackNote.trim()
-            ? letter.photoBackNote
-            : `Disimpan bersama surat untuk ${letter.to}.\n— ${letter.from}`;
+        renderReadingMediaSlide(letter);
       } else {
         photoCol.classList.add("hidden");
+        stopActiveMediaPlayback();
       }
 
       // Show Sealed View First
@@ -1932,6 +2029,122 @@
       modal.classList.remove("hidden");
       modal.classList.add("flex");
     }
+
+    function stopActiveMediaPlayback() {
+      const iframeEl = document.getElementById("tableVideoIframe");
+      const nativeVidEl = document.getElementById("tableVideoNative");
+      if (iframeEl) iframeEl.src = "";
+      if (nativeVidEl) {
+        nativeVidEl.pause();
+        nativeVidEl.removeAttribute("src");
+        nativeVidEl.load();
+      }
+    }
+
+    function renderReadingMediaSlide(letterOverride = null) {
+      const letter = letterOverride || letters.find(l => l.id === activeLetterId) || { to: "Kamu", from: "Aku" };
+      const total = activeReadingMediaList.length;
+      if (total === 0) return;
+
+      if (activeReadingMediaIndex < 0) activeReadingMediaIndex = total - 1;
+      if (activeReadingMediaIndex >= total) activeReadingMediaIndex = 0;
+
+      const item = activeReadingMediaList[activeReadingMediaIndex];
+      isPolaroidFlipped = false;
+      const flipInner = document.getElementById("polaroidFlipInner");
+      if (flipInner) flipInner.classList.remove("is-flipped");
+
+      // Header Carousel Controls (when > 1 item)
+      const headerEl = document.getElementById("polaroidCarouselHeader");
+      const counterEl = document.getElementById("polaroidCarouselCounter");
+      const dotsEl = document.getElementById("polaroidCarouselDots");
+      if (total > 1) {
+        headerEl.classList.remove("hidden");
+        counterEl.textContent = `${activeReadingMediaIndex + 1} / ${total}`;
+        dotsEl.innerHTML = activeReadingMediaList
+          .map((_, idx) => `<button type="button" onclick="jumpReadingMedia(${idx})" class="w-2 h-2 rounded-full transition ${idx === activeReadingMediaIndex ? "bg-[#FAF6EE] scale-125" : "bg-white/35 hover:bg-white/60"}"></button>`)
+          .join("");
+      } else {
+        headerEl.classList.add("hidden");
+      }
+
+      const imgEl = document.getElementById("tablePhotoImg");
+      const iframeEl = document.getElementById("tableVideoIframe");
+      const nativeVidEl = document.getElementById("tableVideoNative");
+      const lightboxBtn = document.getElementById("tableLightboxBtn");
+
+      stopActiveMediaPlayback();
+
+      if (item.type === "video") {
+        imgEl.classList.add("hidden");
+        lightboxBtn.classList.add("hidden");
+
+        const isEmbed = /drive\.google\.com\/file\/d\/|youtube\.com\/embed\/|player\.vimeo\.com\//i.test(item.url);
+        if (isEmbed) {
+          nativeVidEl.classList.add("hidden");
+          iframeEl.classList.remove("hidden");
+          iframeEl.src = item.url;
+        } else {
+          iframeEl.classList.add("hidden");
+          nativeVidEl.classList.remove("hidden");
+          nativeVidEl.src = item.url;
+        }
+      } else {
+        iframeEl.classList.add("hidden");
+        nativeVidEl.classList.add("hidden");
+        imgEl.classList.remove("hidden");
+        lightboxBtn.classList.remove("hidden");
+        imgEl.src = item.url;
+        document.getElementById("lightboxImg").src = item.url;
+      }
+
+      document.getElementById("tablePhotoCaption").textContent =
+        item.caption && item.caption.trim()
+          ? item.caption
+          : (item.type === "video" ? "Klip kenangan kita" : "Kenangan kita");
+
+      document.getElementById("tableBackNoteHeader").textContent =
+        total > 1 ? `Catatan di Balik Kartu #${activeReadingMediaIndex + 1}` : "Catatan di Balik Kartu";
+
+      document.getElementById("tablePhotoBackNote").textContent =
+        item.backNote && item.backNote.trim()
+          ? item.backNote
+          : `Disimpan bersama surat untuk ${letter.to}.
+— ${letter.from}`;
+    }
+
+    window.stepReadingMedia = function (delta) {
+      if (activeReadingMediaList.length <= 1) return;
+      activeReadingMediaIndex = (activeReadingMediaIndex + delta + activeReadingMediaList.length) % activeReadingMediaList.length;
+      renderReadingMediaSlide();
+    };
+
+    window.jumpReadingMedia = function (idx) {
+      activeReadingMediaIndex = idx;
+      renderReadingMediaSlide();
+    };
+
+    // Touch swipe left/right on Polaroid frame to switch between media items
+    (function initPolaroidSwipeGesture() {
+      const swipeEl = document.getElementById("polaroidSwipeArea");
+      if (!swipeEl) return;
+      let touchStartX = 0;
+      let touchStartY = 0;
+      swipeEl.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+      swipeEl.addEventListener("touchend", (e) => {
+        if (activeReadingMediaList.length <= 1 || e.changedTouches.length !== 1) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+          stepReadingMedia(dx < 0 ? 1 : -1);
+        }
+      }, { passive: true });
+    })();
 
     let isUnsealingAnimating = false;
 
@@ -1971,11 +2184,13 @@
     };
 
     window.returnToSealedEnvelopeView = function () {
+      stopActiveMediaPlayback();
       const letter = letters.find(l => l.id === activeLetterId);
       if (letter) openReadingStageForLetter(letter);
     };
 
     window.closeReadingStage = function () {
+      stopActiveMediaPlayback();
       const modal = document.getElementById("readingStageModal");
       modal.classList.add("hidden");
       modal.classList.remove("flex");
@@ -2012,20 +2227,116 @@
     };
 
     /***************************************************************************
-     * 8. GOOGLE DRIVE + GOOGLE APPS SCRIPT PHOTO UPLOAD & COMPRESSION
+     * 8. MULTI-MEDIA (MAX 5 PHOTOS/VIDEOS) + GOOGLE DRIVE / LINK PARSER
      ***************************************************************************/
-    function normalizeGoogleDriveImageUrl(url) {
-      if (!url) return "";
-      const trimmed = url.trim();
-      const matchFileId = trimmed.match(/\/d\/([a-zA-Z0-9_-]{15,})/) || trimmed.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
-      if (matchFileId && matchFileId[1] && (trimmed.includes("drive.google.com") || trimmed.includes("docs.google.com"))) {
-        return `https://lh3.googleusercontent.com/d/${matchFileId[1]}`;
-      }
-      return trimmed;
+    const MAX_MEDIA_PER_LETTER = 5;
+    const MAX_DIRECT_VIDEO_BYTES = 25 * 1024 * 1024; // 25 MB direct upload limit
+
+    function extractGoogleDriveFileId(url) {
+      if (!url) return null;
+      const trimmed = String(url).trim();
+      if (!trimmed.includes("drive.google.com") && !trimmed.includes("docs.google.com")) return null;
+      const match =
+        trimmed.match(/\/d\/([a-zA-Z0-9_-]{15,})/) ||
+        trimmed.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+      return match && match[1] ? match[1] : null;
     }
 
-    // Compress image on client-side canvas (max 1400px, 0.82 JPEG)
-    function compressImageFile(file, maxDim = 1400, quality = 0.82) {
+    function extractYouTubeVideoId(url) {
+      if (!url) return null;
+      const trimmed = String(url).trim();
+      const match = trimmed.match(
+        /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+      );
+      return match && match[1] ? match[1] : null;
+    }
+
+    function normalizeMediaUrl(rawUrl, preferredType = "auto") {
+      if (!rawUrl) return null;
+      const trimmed = String(rawUrl).trim();
+      if (!trimmed) return null;
+
+      // 1. YouTube / YouTube Shorts
+      const ytId = extractYouTubeVideoId(trimmed);
+      if (ytId) {
+        return {
+          type: "video",
+          url: `https://www.youtube.com/embed/${ytId}?rel=0`,
+          thumbUrl: `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+        };
+      }
+
+      // 2. Google Drive File Link
+      const driveId = extractGoogleDriveFileId(trimmed);
+      if (driveId) {
+        const isVideo =
+          preferredType === "video" ||
+          (preferredType === "auto" && /\/preview(?:\?|$)/.test(trimmed));
+        if (isVideo) {
+          return {
+            type: "video",
+            url: `https://drive.google.com/file/d/${driveId}/preview`,
+            thumbUrl: `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`
+          };
+        }
+        return {
+          type: "image",
+          url: `https://lh3.googleusercontent.com/d/${driveId}`,
+          thumbUrl: `https://lh3.googleusercontent.com/d/${driveId}`
+        };
+      }
+
+      // 3. Direct Video Extension or Explicit Video Selection
+      const isDirectVideoExt = /\.(mp4|webm|mov|m4v|ogg)(?:[?#]|$)/i.test(trimmed) || trimmed.startsWith("data:video/");
+      if (preferredType === "video" || isDirectVideoExt) {
+        return {
+          type: "video",
+          url: trimmed,
+          thumbUrl: ""
+        };
+      }
+
+      // 4. Default to Image
+      return {
+        type: "image",
+        url: trimmed,
+        thumbUrl: trimmed
+      };
+    }
+
+    function getLetterMediaList(letter) {
+      if (!letter) return [];
+      if (Array.isArray(letter.media) && letter.media.length > 0) {
+        return letter.media
+          .filter(m => m && m.url && String(m.url).trim())
+          .slice(0, MAX_MEDIA_PER_LETTER)
+          .map(m => {
+            const norm = normalizeMediaUrl(m.url, m.type === "video" ? "video" : "image");
+            return {
+              type: m.type === "video" ? "video" : (norm ? norm.type : "image"),
+              url: norm ? norm.url : String(m.url).trim(),
+              thumbUrl: m.thumbUrl || (norm ? norm.thumbUrl : ""),
+              caption: m.caption || "",
+              backNote: m.backNote || ""
+            };
+          });
+      }
+      if (letter.photoUrl && String(letter.photoUrl).trim()) {
+        const norm = normalizeMediaUrl(letter.photoUrl, "auto");
+        if (norm) {
+          return [{
+            type: norm.type,
+            url: norm.url,
+            thumbUrl: norm.thumbUrl || "",
+            caption: letter.photoCaption || "",
+            backNote: letter.photoBackNote || ""
+          }];
+        }
+      }
+      return [];
+    }
+
+    function compressImageFile(file, maxDim = 1200, quality = 0.82) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -2047,8 +2358,7 @@
             canvas.height = height;
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL("image/jpeg", quality);
-            resolve(dataUrl);
+            resolve(canvas.toDataURL("image/jpeg", quality));
           };
           img.onerror = reject;
           img.src = ev.target.result;
@@ -2058,80 +2368,296 @@
       });
     }
 
-    window.handlePhotoFileSelect = async function (event) {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
 
+    window.setComposeLinkMediaType = function (type) {
+      composeLinkMediaType = type === "image" ? "image" : "video";
+      const vidBtn = document.getElementById("linkTypeBtn-video");
+      const imgBtn = document.getElementById("linkTypeBtn-image");
+      const inputEl = document.getElementById("photoDirectUrlInput");
+      if (vidBtn && imgBtn) {
+        if (composeLinkMediaType === "video") {
+          vidBtn.className = "px-2 py-1 rounded-md font-medium bg-[#7E2622] text-[#FAF6EE] transition";
+          imgBtn.className = "px-2 py-1 rounded-md font-medium opacity-75 hover:opacity-100 transition";
+          if (inputEl) inputEl.placeholder = "Tempel link video Google Drive / YouTube / .mp4...";
+        } else {
+          imgBtn.className = "px-2 py-1 rounded-md font-medium bg-[#7E2622] text-[#FAF6EE] transition";
+          vidBtn.className = "px-2 py-1 rounded-md font-medium opacity-75 hover:opacity-100 transition";
+          if (inputEl) inputEl.placeholder = "Tempel link foto Google Drive / URL gambar...";
+        }
+      }
+    };
+
+    window.handleMediaFilesSelect = async function (event) {
+      const files = Array.from((event.target && event.target.files) || []);
+      event.target.value = "";
+      if (files.length === 0) return;
+
+      const remainingSlots = MAX_MEDIA_PER_LETTER - composeMediaList.length;
+      if (remainingSlots <= 0) {
+        showComposeMediaStatus("Maksimal 5 foto/video per surat sudah tercapai.");
+        return;
+      }
+
+      const filesToProcess = files.slice(0, remainingSlots);
+      for (let i = 0; i < filesToProcess.length; i++) {
+        const file = filesToProcess[i];
+        const isVideo = (file.type || "").startsWith("video/");
+        const progressPrefix = filesToProcess.length > 1 ? `(${i + 1}/${filesToProcess.length}) ` : "";
+
+        if (isVideo) {
+          if (file.size > MAX_DIRECT_VIDEO_BYTES) {
+            showComposeMediaStatus(
+              `⚠️ "${file.name}" > 25 MB. Upload ke Google Drive lalu tempel link-nya di kolom bawah.`
+            );
+            continue;
+          }
+
+          showComposeMediaStatus(`${progressPrefix}Mengunggah klip video "${file.name}" ke Google Drive...`);
+          try {
+            const videoBase64 = await readFileAsDataUrl(file);
+            const response = await fetch(GAS_WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                filename: file.name || `ldr_clip_${Date.now()}.mp4`,
+                fileName: file.name || `ldr_clip_${Date.now()}.mp4`,
+                mimeType: file.type || "video/mp4",
+                mediaType: "video",
+                base64: videoBase64
+              })
+            });
+            const result = await response.json();
+            if (result && (result.status === "ok" || result.status === "success") && result.url) {
+              const norm = normalizeMediaUrl(result.url, "video");
+              composeMediaList.push({
+                type: "video",
+                url: norm ? norm.url : result.url,
+                thumbUrl: result.thumbUrl || (norm ? norm.thumbUrl : ""),
+                caption: "",
+                backNote: ""
+              });
+              composeSelectedMediaIdx = composeMediaList.length - 1;
+              showComposeMediaStatus(`✓ Klip video berhasil tersimpan di Google Drive!`);
+            } else {
+              throw new Error(result.message || "Gagal mengunggah video");
+            }
+          } catch (err) {
+            console.warn("Upload video GDrive gagal:", err);
+            showComposeMediaStatus(
+              `⚠️ Gagal upload langsung video ini. Coba upload ke Google Drive & tempel link-nya.`
+            );
+          }
+        } else {
+          showComposeMediaStatus(`${progressPrefix}Mengompresi & mengunggah foto...`);
+          try {
+            const compressedBase64 = await compressImageFile(file, 1200, 0.82);
+            const response = await fetch(GAS_WEB_APP_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                filename: file.name || `ldr_photo_${Date.now()}.jpg`,
+                fileName: file.name || `ldr_photo_${Date.now()}.jpg`,
+                mimeType: "image/jpeg",
+                mediaType: "image",
+                base64: compressedBase64
+              })
+            });
+            const result = await response.json();
+            if (result && (result.status === "ok" || result.status === "success") && result.url) {
+              composeMediaList.push({
+                type: "image",
+                url: result.url,
+                thumbUrl: result.url,
+                caption: "",
+                backNote: ""
+              });
+              composeSelectedMediaIdx = composeMediaList.length - 1;
+              showComposeMediaStatus(`✓ Foto berhasil tersimpan di Google Drive!`);
+            } else {
+              throw new Error(result.message || "Respons Google Script tidak valid");
+            }
+          } catch (err) {
+            console.warn("Upload GDrive gagal, memakai foto terkompresi langsung:", err);
+            const fallbackBase64 = await compressImageFile(file, 850, 0.72);
+            composeMediaList.push({
+              type: "image",
+              url: fallbackBase64,
+              thumbUrl: fallbackBase64,
+              caption: "",
+              backNote: ""
+            });
+            composeSelectedMediaIdx = composeMediaList.length - 1;
+            showComposeMediaStatus(`✓ Foto siap diselipkan ke dalam amplop`);
+          }
+        }
+        renderComposeMediaManager();
+      }
+    };
+
+    window.addMediaFromLinkInput = function () {
+      const inputEl = document.getElementById("photoDirectUrlInput");
+      const rawVal = (inputEl?.value || "").trim();
+      if (!rawVal) return;
+
+      if (composeMediaList.length >= MAX_MEDIA_PER_LETTER) {
+        showComposeMediaStatus("Maksimal 5 foto/video per surat sudah tercapai.");
+        return;
+      }
+
+      const norm = normalizeMediaUrl(rawVal, composeLinkMediaType);
+      if (!norm) return;
+
+      composeMediaList.push({
+        type: norm.type,
+        url: norm.url,
+        thumbUrl: norm.thumbUrl || "",
+        caption: "",
+        backNote: ""
+      });
+      composeSelectedMediaIdx = composeMediaList.length - 1;
+      inputEl.value = "";
+      showComposeMediaStatus(
+        norm.type === "video"
+          ? `✓ Link video ditambahkan (${composeMediaList.length}/${MAX_MEDIA_PER_LETTER})`
+          : `✓ Link foto ditambahkan (${composeMediaList.length}/${MAX_MEDIA_PER_LETTER})`
+      );
+      renderComposeMediaManager();
+    };
+
+    function showComposeMediaStatus(msg) {
       const statusBox = document.getElementById("photoUploadStatusBox");
       const statusText = document.getElementById("photoUploadStatusText");
-      const extraFields = document.getElementById("photoExtraFields");
-      const clearBtn = document.getElementById("clearPhotoBtn");
-
+      if (!statusBox || !statusText) return;
       statusBox.classList.remove("hidden");
-      statusText.textContent = "Mengompresi foto agar ringan...";
+      statusText.textContent = msg;
+    }
 
-      try {
-        const compressedBase64 = await compressImageFile(file, 1200, 0.82);
-        statusText.textContent = "Mengunggah foto ke Google Drive...";
-
-        const response = await fetch(GAS_WEB_APP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            filename: file.name || `ldr_photo_${Date.now()}.jpg`,
-            fileName: file.name || `ldr_photo_${Date.now()}.jpg`,
-            mimeType: "image/jpeg",
-            base64: compressedBase64
-          })
-        });
-        const result = await response.json();
-        if (result && (result.status === "ok" || result.status === "success") && result.url) {
-          composeUploadedPhotoUrl = result.url;
-          document.getElementById("photoDirectUrlInput").value = result.url;
-          statusText.textContent = "✓ Foto berhasil tersimpan di Google Drive!";
-        } else {
-          throw new Error(result.message || "Respons Google Script tidak valid");
-        }
-
-        extraFields.classList.remove("hidden");
-        clearBtn.classList.remove("hidden");
-        renderComposeEnvelopePreview();
-      } catch (err) {
-        console.warn("Upload GDrive gagal, menggunakan foto terkompresi langsung:", err);
-        const fallbackBase64 = await compressImageFile(file, 850, 0.72);
-        composeUploadedPhotoUrl = fallbackBase64;
-        statusText.textContent = "✓ Foto siap diselipkan ke dalam amplop";
-        extraFields.classList.remove("hidden");
-        clearBtn.classList.remove("hidden");
-        renderComposeEnvelopePreview();
-      }
+    window.selectComposeMediaItem = function (idx) {
+      if (idx < 0 || idx >= composeMediaList.length) return;
+      composeSelectedMediaIdx = idx;
+      renderComposeMediaManager();
     };
 
-    window.handlePhotoUrlInput = function () {
-      const val = document.getElementById("photoDirectUrlInput").value.trim();
-      composeUploadedPhotoUrl = normalizeGoogleDriveImageUrl(val);
-      const extraFields = document.getElementById("photoExtraFields");
+    window.removeComposeMediaItem = function (event, idx) {
+      event.stopPropagation();
+      composeMediaList.splice(idx, 1);
+      if (composeSelectedMediaIdx >= composeMediaList.length) {
+        composeSelectedMediaIdx = Math.max(0, composeMediaList.length - 1);
+      }
+      renderComposeMediaManager();
+    };
+
+    window.moveComposeMediaItem = function (event, idx, delta) {
+      event.stopPropagation();
+      const target = idx + delta;
+      if (target < 0 || target >= composeMediaList.length) return;
+      const temp = composeMediaList[idx];
+      composeMediaList[idx] = composeMediaList[target];
+      composeMediaList[target] = temp;
+      composeSelectedMediaIdx = target;
+      renderComposeMediaManager();
+    };
+
+    window.updateSelectedMediaMeta = function () {
+      if (composeMediaList.length === 0) return;
+      const item = composeMediaList[composeSelectedMediaIdx];
+      if (!item) return;
+      item.caption = document.getElementById("photoCaptionInput").value;
+      item.backNote = document.getElementById("photoBackNoteInput").value;
+    };
+
+    function renderComposeMediaManager() {
+      const countBadge = document.getElementById("mediaCountBadge");
       const clearBtn = document.getElementById("clearPhotoBtn");
-      if (composeUploadedPhotoUrl) {
-        extraFields.classList.remove("hidden");
-        clearBtn.classList.remove("hidden");
-      } else {
-        extraFields.classList.add("hidden");
-        clearBtn.classList.add("hidden");
+      const stripEl = document.getElementById("composeMediaStrip");
+      const extraFields = document.getElementById("photoExtraFields");
+      const editingLabel = document.getElementById("editingMediaItemLabel");
+      const captionInput = document.getElementById("photoCaptionInput");
+      const backNoteInput = document.getElementById("photoBackNoteInput");
+
+      if (countBadge) {
+        countBadge.textContent = `${composeMediaList.length}/${MAX_MEDIA_PER_LETTER}`;
       }
+
+      if (composeMediaList.length === 0) {
+        if (clearBtn) clearBtn.classList.add("hidden");
+        if (stripEl) {
+          stripEl.classList.add("hidden");
+          stripEl.innerHTML = "";
+        }
+        if (extraFields) extraFields.classList.add("hidden");
+        renderComposeEnvelopePreview();
+        return;
+      }
+
+      if (clearBtn) clearBtn.classList.remove("hidden");
+      if (stripEl) {
+        stripEl.classList.remove("hidden");
+        stripEl.innerHTML = composeMediaList
+          .map((item, idx) => {
+            const isSelected = idx === composeSelectedMediaIdx;
+            const ringCls = isSelected
+              ? "ring-2 ring-[#7E2622] dark:ring-[#B8955A] scale-[1.02]"
+              : "opacity-80 hover:opacity-100";
+            const thumbVisual =
+              item.type === "video"
+                ? (item.thumbUrl
+                    ? `<img src="${escapeHtml(item.thumbUrl)}" class="w-full h-full object-cover" /><span class="absolute inset-0 flex items-center justify-center bg-black/35 text-white text-xs">▶</span>`
+                    : `<div class="w-full h-full bg-[#231F1D] text-[#FAF6EE] flex flex-col items-center justify-center text-[10px]"><span>▶</span><span>Video</span></div>`)
+                : `<img src="${escapeHtml(item.url)}" class="w-full h-full object-cover" />`;
+
+            return `
+              <div onclick="selectComposeMediaItem(${idx})"
+                   class="relative w-16 h-20 rounded-lg bg-white dark:bg-black/40 border border-black/15 dark:border-white/15 overflow-hidden shrink-0 cursor-pointer transition ${ringCls}">
+                ${thumbVisual}
+                <span class="absolute top-1 left-1 px-1 rounded bg-black/65 text-white text-[9px] font-mono">#${idx + 1}</span>
+                <button type="button" onclick="removeComposeMediaItem(event, ${idx})"
+                        class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-600 text-white text-[9px] flex items-center justify-center hover:bg-red-700" title="Hapus item">✕</button>
+                <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white flex items-center justify-between px-1 py-0.5 text-[9px]">
+                  <button type="button" onclick="moveComposeMediaItem(event, ${idx}, -1)" class="${idx === 0 ? "opacity-25 pointer-events-none" : "hover:text-amber-300"}">‹</button>
+                  <span>${item.type === "video" ? "🎬" : "📷"}</span>
+                  <button type="button" onclick="moveComposeMediaItem(event, ${idx}, 1)" class="${idx === composeMediaList.length - 1 ? "opacity-25 pointer-events-none" : "hover:text-amber-300"}">›</button>
+                </div>
+              </div>`;
+          })
+          .join("");
+      }
+
+      if (extraFields) {
+        extraFields.classList.remove("hidden");
+        const activeItem = composeMediaList[composeSelectedMediaIdx] || composeMediaList[0];
+        if (editingLabel) {
+          editingLabel.textContent = `Detail Kartu #${composeSelectedMediaIdx + 1} (${activeItem.type === "video" ? "Video" : "Foto"})`;
+        }
+        if (captionInput) captionInput.value = activeItem.caption || "";
+        if (backNoteInput) backNoteInput.value = activeItem.backNote || "";
+      }
+
       renderComposeEnvelopePreview();
-    };
+    }
 
     window.clearSelectedPhoto = function () {
-      composeUploadedPhotoUrl = "";
-      document.getElementById("photoFileInput").value = "";
-      document.getElementById("photoDirectUrlInput").value = "";
-      document.getElementById("photoCaptionInput").value = "";
-      document.getElementById("photoBackNoteInput").value = "";
-      document.getElementById("photoUploadStatusBox").classList.add("hidden");
-      document.getElementById("photoExtraFields").classList.add("hidden");
-      document.getElementById("clearPhotoBtn").classList.add("hidden");
-      renderComposeEnvelopePreview();
+      composeMediaList = [];
+      composeSelectedMediaIdx = 0;
+      const fileInput = document.getElementById("photoFileInput");
+      const urlInput = document.getElementById("photoDirectUrlInput");
+      const capInput = document.getElementById("photoCaptionInput");
+      const noteInput = document.getElementById("photoBackNoteInput");
+      const statusBox = document.getElementById("photoUploadStatusBox");
+      if (fileInput) fileInput.value = "";
+      if (urlInput) urlInput.value = "";
+      if (capInput) capInput.value = "";
+      if (noteInput) noteInput.value = "";
+      if (statusBox) statusBox.classList.add("hidden");
+      renderComposeMediaManager();
     };
 
     /***************************************************************************
@@ -2153,6 +2679,7 @@
     window.openComposeModal = function () {
       composeMotifIndex = Math.floor(Math.random() * 50);
       clearSelectedPhoto();
+      setComposeLinkMediaType("video");
 
       document.getElementById("composeUnlockAt").value = "";
       updateComposeCharCounter();
@@ -2262,7 +2789,7 @@
         createdAt: Date.now(),
         unlockAt: unlockTs,
         motifIndex: composeMotifIndex,
-        photoUrl: composeUploadedPhotoUrl
+        media: composeMediaList
       };
 
       container.innerHTML = buildEnvelopeFrontHtml(mockLetter, true);
@@ -2278,6 +2805,30 @@
 
       if (!toVal || !fromVal || !bodyVal) return;
 
+      // Capture any typed link still sitting in the URL input box before submitting
+      const pendingLink = (document.getElementById("photoDirectUrlInput")?.value || "").trim();
+      if (pendingLink && composeMediaList.length < MAX_MEDIA_PER_LETTER) {
+        const norm = normalizeMediaUrl(pendingLink, composeLinkMediaType);
+        if (norm) {
+          composeMediaList.push({
+            type: norm.type,
+            url: norm.url,
+            thumbUrl: norm.thumbUrl || "",
+            caption: "",
+            backNote: ""
+          });
+        }
+      }
+
+      const cleanedMedia = composeMediaList.slice(0, MAX_MEDIA_PER_LETTER).map(m => ({
+        type: m.type === "video" ? "video" : "image",
+        url: m.url,
+        thumbUrl: m.thumbUrl || "",
+        caption: (m.caption || "").trim(),
+        backNote: (m.backNote || "").trim()
+      }));
+
+      const firstMedia = cleanedMedia[0] || null;
       const centerWorldX = Math.round(-camX / camZoom - 138 + (Math.random() * 80 - 40));
       const centerWorldY = Math.round(-camY / camZoom - 92 + (Math.random() * 60 - 30));
       const randomTilt = +((Math.random() * 4.4) - 2.2).toFixed(2);
@@ -2293,9 +2844,10 @@
         worldY: centerWorldY,
         tilt: randomTilt,
         motifIndex: composeMotifIndex,
-        photoUrl: composeUploadedPhotoUrl || "",
-        photoCaption: document.getElementById("photoCaptionInput").value.trim(),
-        photoBackNote: document.getElementById("photoBackNoteInput").value.trim()
+        media: cleanedMedia,
+        photoUrl: firstMedia ? firstMedia.url : "",
+        photoCaption: firstMedia ? firstMedia.caption : "",
+        photoBackNote: firstMedia ? firstMedia.backNote : ""
       };
 
       document.getElementById("composeBody").value = "";
@@ -2490,10 +3042,11 @@
           return matchOuter;
         }
 
+        const mediaCaptions = getLetterMediaList(l).map(m => m.caption || "").join(" ").toLowerCase();
         return (
           matchOuter ||
           (l.body || "").toLowerCase().includes(query) ||
-          (l.photoCaption || "").toLowerCase().includes(query)
+          mediaCaptions.includes(query)
         );
       });
 
@@ -2506,7 +3059,12 @@
         .map((l) => {
           const isLocked = (l.unlockAt || 0) > now;
           const isRead = Boolean(readHistoryMap[l.id]);
-          const hasPhoto = Boolean(l.photoUrl && l.photoUrl.trim());
+          const mediaItems = getLetterMediaList(l);
+          const pCnt = mediaItems.filter(m => m.type !== "video").length;
+          const vCnt = mediaItems.filter(m => m.type === "video").length;
+          const mediaSummaryParts = [];
+          if (pCnt > 0) mediaSummaryParts.push(`📷 ${pCnt}`);
+          if (vCnt > 0) mediaSummaryParts.push(`🎬 ${vCnt}`);
 
           let badgeHtml = "";
           if (hasCode && isRead) {
@@ -2532,7 +3090,7 @@
                 </div>
                 <div class="text-[10px] font-mono opacity-60 flex items-center gap-2">
                   <span>${formatShortPostmarkDate(l.createdAt)}</span>
-                  ${hasPhoto ? `<span>• 📷 Foto</span>` : ""}
+                  ${mediaSummaryParts.length > 0 ? `<span>• ${mediaSummaryParts.join(" · ")}</span>` : ""}
                 </div>
               </div>
               <div class="flex items-center gap-1 shrink-0">
