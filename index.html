@@ -72,7 +72,7 @@
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--pill-border);
     border-radius: 999px;
-    padding: 8px 15px;
+    padding: 7px 14px;
     box-shadow: var(--shadow);
     font-size: 13px;
     font-weight: 600;
@@ -90,12 +90,32 @@
     width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: #22C55E;
     box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
   }
+  .role-chip {
+    border: 1px solid var(--pill-border);
+    background: rgba(122, 31, 36, 0.06);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    transition: 0.2s;
+  }
+  .role-chip:hover { background: rgba(122, 31, 36, 0.14); }
+  .role-chip.blue { background: rgba(96, 165, 250, 0.18); border-color: rgba(96, 165, 250, 0.45); }
+  .role-chip.pink { background: rgba(244, 114, 182, 0.18); border-color: rgba(244, 114, 182, 0.45); }
+
   .presence {
-    display: inline-flex; align-items: center; gap: 4px; margin-left: 2px;
-    padding-left: 8px; border-left: 1px solid var(--pill-border);
+    display: inline-flex; align-items: center; gap: 4px;
+    padding-left: 6px; border-left: 1px solid var(--pill-border);
     flex-shrink: 0;
   }
-  .p-dot { width: 8px; height: 8px; border-radius: 50%; opacity: 0.35; transition: 0.3s; }
+  .p-dot { width: 8px; height: 8px; border-radius: 50%; opacity: 0.3; transition: 0.3s; }
   .p-dot.blue { background: #60A5FA; }
   .p-dot.pink { background: #F472B6; }
   .p-dot.on { opacity: 1; transform: scale(1.15); }
@@ -118,22 +138,42 @@
   }
   .clock-badge:hover { background: rgba(122, 31, 36, 0.08); }
 
-  /* Time Popover */
-  .time-pop {
+  /* Popovers (Role Picker & Time Picker) */
+  .popover-card {
     position: fixed;
     top: calc(max(14px, env(safe-area-inset-top)) + 48px);
-    right: max(14px, env(safe-area-inset-right));
     z-index: 25;
     background: var(--pill-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--pill-border);
     border-radius: 18px;
-    padding: 12px 14px;
+    padding: 10px 12px;
     box-shadow: var(--shadow);
-    display: none; flex-direction: column; gap: 8px; width: 215px;
+    display: none; flex-direction: column; gap: 6px;
   }
-  .time-pop.open { display: flex; }
+  .popover-card.open { display: flex; }
+  .role-pop { left: max(14px, env(safe-area-inset-left)); width: 195px; }
+  .time-pop { right: max(14px, env(safe-area-inset-right)); width: 215px; }
+
+  .role-opt {
+    border: 1px solid var(--pill-border);
+    background: transparent;
+    color: var(--text);
+    border-radius: 11px;
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: 0.15s;
+  }
+  .role-opt:hover { background: rgba(122, 31, 36, 0.08); }
+  .role-opt.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
   .time-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .t-btn {
     border: 1px solid var(--pill-border); background: transparent; color: var(--text);
@@ -166,6 +206,82 @@
     white-space: nowrap;
   }
   #tooltip.show { opacity: 1; }
+
+  /* First-time Role Prompt Banner */
+  .role-banner {
+    position: fixed;
+    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 54px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 22;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: var(--pill-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: 6px 10px;
+    box-shadow: var(--shadow);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .role-banner.show { display: inline-flex; }
+  .rb-btn {
+    border: 1px solid var(--pill-border);
+    background: transparent;
+    color: var(--text);
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .rb-btn.blue { background: rgba(96, 165, 250, 0.22); border-color: rgba(96, 165, 250, 0.5); }
+  .rb-btn.pink { background: rgba(244, 114, 182, 0.22); border-color: rgba(244, 114, 182, 0.5); }
+
+  /* Couple Action Bar (Kiss, Peluk, Duduk) */
+  .couple-dock {
+    position: fixed;
+    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 52px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: none;
+    align-items: center;
+    gap: 5px;
+    background: var(--pill-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: 5px 7px;
+    box-shadow: var(--shadow);
+  }
+  .couple-dock.show { display: inline-flex; }
+  .act-btn {
+    border: none;
+    background: transparent;
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: 0.18s;
+  }
+  .act-btn:hover { background: rgba(122, 31, 36, 0.1); }
+  .act-btn:active { transform: scale(0.94); }
+  .act-btn.love { background: rgba(225, 29, 72, 0.12); color: #BE123C; }
+  body.dark .act-btn.love { background: rgba(244, 114, 182, 0.18); color: #F9A8D4; }
 
   /* Bottom Portal Dock */
   .hud-bottom {
@@ -258,44 +374,36 @@
       left: 10px;
       right: 10px;
     }
-    .pill {
-      padding: 6px 10px;
-      gap: 6px;
-      font-size: 12px;
-    }
+    .pill { padding: 6px 10px; gap: 6px; font-size: 12px; }
     .brand-title { font-size: 13.5px; }
-    .presence { padding-left: 6px; gap: 3px; }
+    .presence { padding-left: 5px; gap: 3px; }
     .icon-group { gap: 1px; }
     .icon-btn { width: 28px; height: 28px; font-size: 13px; }
     .clock-badge { font-size: 11px; padding: 3px 5px; }
-    .time-pop {
-      top: calc(max(10px, env(safe-area-inset-top)) + 44px);
-      right: 10px;
-    }
+    .popover-card { top: calc(max(10px, env(safe-area-inset-top)) + 44px); }
+    .role-pop { left: 10px; }
+    .time-pop { right: 10px; }
     .hud-bottom {
       bottom: max(12px, env(safe-area-inset-bottom));
       padding: 5px 6px;
       gap: 4px;
     }
-    .dock-btn {
-      padding: 7px 11px;
-      font-size: 12px;
-      gap: 5px;
+    .couple-dock, .role-banner {
+      bottom: calc(max(12px, env(safe-area-inset-bottom)) + 48px);
     }
-    .modal-card {
-      width: 96vw;
-      height: 88dvh;
-      border-radius: 18px;
-    }
+    .dock-btn { padding: 7px 11px; font-size: 12px; gap: 5px; }
+    .act-btn { padding: 6px 10px; font-size: 11.5px; }
+    .modal-card { width: 96vw; height: 88dvh; border-radius: 18px; }
     .modal-bar { padding: 8px 10px; gap: 6px; }
     .m-btn { padding: 6px 10px; font-size: 11.5px; }
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 440px) {
     .dom-full { display: none; }
     .dom-short { display: inline; }
     .full-label-extra { display: none; }
     .dock-btn { padding: 7px 9px; font-size: 11.5px; }
+    .role-chip { padding: 2px 7px; font-size: 11px; }
   }
 </style>
 </head>
@@ -308,6 +416,7 @@
       <span class="dom-full">natlagildr.github.io</span>
       <span class="dom-short">natlagildr</span>
     </span>
+    <button class="role-chip" id="roleChipBtn" title="Pilih Karakter Kontrol">👀 Auto</button>
     <div class="presence" title="Status Online Berdua">
       <span class="p-dot blue on" id="dotBlue"></span>
       <span class="p-dot pink" id="dotPink"></span>
@@ -324,7 +433,16 @@
   </div>
 </div>
 
-<div class="time-pop" id="timePop">
+<!-- Role Picker Popover -->
+<div class="popover-card role-pop" id="rolePop">
+  <div style="font-size:11px;font-weight:700;color:var(--muted);padding:0 4px;">Kontrol Karakter</div>
+  <button class="role-opt" data-set-role="blue"><span>💙 Cowo (Biru)</span><span id="tagBlue"></span></button>
+  <button class="role-opt" data-set-role="pink"><span>🩷 Cewe (Pink)</span><span id="tagPink"></span></button>
+  <button class="role-opt active" data-set-role="auto"><span>👀 Mode Auto</span><span></span></button>
+</div>
+
+<!-- Time Picker Popover -->
+<div class="popover-card time-pop" id="timePop">
   <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:600;">
     <span>Simulasi Waktu</span>
     <button class="t-btn" id="btnAutoTime" style="padding:3px 9px;">Auto</button>
@@ -342,6 +460,22 @@
   <canvas id="roomCanvas"></canvas>
 </div>
 <div id="tooltip"></div>
+
+<!-- Quick First-Visit Role Selector -->
+<div class="role-banner" id="roleBanner">
+  <span>Pilih:</span>
+  <button class="rb-btn blue" data-set-role="blue">💙 Cowo</button>
+  <button class="rb-btn pink" data-set-role="pink">🩷 Cewe</button>
+</div>
+
+<!-- Couple Interaction Bar (Muncul saat Cowo atau Cewe dipilih) -->
+<div class="couple-dock" id="coupleDock">
+  <button class="act-btn love" id="btnKiss">💋 Kiss</button>
+  <div class="divider"></div>
+  <button class="act-btn love" id="btnHug">🤗 Peluk</button>
+  <div class="divider"></div>
+  <button class="act-btn" id="btnSitDesk">🪑 Duduk</button>
+</div>
 
 <div class="hud-bottom">
   <button class="dock-btn primary" data-portal="surat">💌 Surat</button>
@@ -370,9 +504,10 @@
   </div>
 </div>
 
-<!-- Firebase SDK (Opsional untuk Sync Real-time Berdua) -->
+<!-- Firebase SDK (Realtime Database & Analytics) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
 
 <script>
 (() => {
@@ -385,16 +520,23 @@
     games:      { label: 'Mini Games',           url: 'https://natlagildr.github.io/games' }
   };
 
-  // Tempelkan config Firebase Realtime Database kamu di sini nanti agar sync real-time berdua aktif:
   const FIREBASE_CONFIG = {
-    apiKey: "",
-    authDomain: "",
-    databaseURL: "",
-    projectId: ""
+    apiKey: "AIzaSyDS8uU_INJOXobYmtTXT-YcH1Boz6NoGCo",
+    authDomain: "natlagildr.firebaseapp.com",
+    databaseURL: "https://natlagildr-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "natlagildr",
+    storageBucket: "natlagildr.firebasestorage.app",
+    messagingSenderId: "347816988327",
+    appId: "1:347816988327:web:b2165acfe97ba28e6dd582",
+    measurementId: "G-WZ2FE9G5K8"
   };
 
   let db = null;
   let roomRef = null;
+  let lastHandledPingAt = 0;
+  let lastHandledCatPingAt = 0;
+  let lastHandledCoupleAt = 0;
+  let lastCharPushAt = 0;
   const sessionId = Math.random().toString(36).slice(2, 9);
 
   // =========================================================================
@@ -405,8 +547,9 @@
     'gorden_tutup', 'gorden_buka',
     'beanbag', 'karpet', 'tanaman', 'guling', 'bantal',
     'kucing_tidur', 'kucing_duduk', 'kucing_senang',
-    'biru_diam', 'biru_jalan1', 'biru_jalan2', 'biru_tidur',
-    'pink_diam', 'pink_jalan1', 'pink_jalan2', 'pink_tidur'
+    'biru_diam', 'biru_jalan1', 'biru_jalan2', 'biru_tidur', 'biru_duduk',
+    'pink_diam', 'pink_jalan1', 'pink_jalan2', 'pink_tidur', 'pink_duduk',
+    'couple_hug1', 'couple_hug2', 'couple_kiss1', 'couple_kiss2'
   ];
 
   const IMG = {};
@@ -430,7 +573,7 @@
   }
 
   // =========================================================================
-  // 3. STATE KAMAR & SINKRONISASI
+  // 3. STATE KAMAR, PILIHAN KARAKTER & SINKRONISASI FIREBASE
   // =========================================================================
   const DEFAULT_DECORS = {
     karpet:  { x: 358, y: 508, label: 'Karpet Lilac' },
@@ -440,6 +583,9 @@
     bantal:  { x: 318, y: 388, label: 'Bantal Hijau' }
   };
 
+  let myRole = localStorage.getItem('natla_role') || 'auto'; // 'blue' | 'pink' | 'auto'
+  let remotePresence = {};
+
   let roomState = {
     curtainOpen: true,
     lampOn: false,
@@ -448,19 +594,71 @@
     decors: JSON.parse(localStorage.getItem('natla_decors_v2') || 'null') || JSON.parse(JSON.stringify(DEFAULT_DECORS))
   };
 
+  function updatePresenceInFirebase() {
+    if (!roomRef || !db) return;
+    const myPresence = roomRef.child('presence/' + sessionId);
+    myPresence.onDisconnect().remove();
+    myPresence.set({
+      role: myRole,
+      onlineAt: firebase.database.ServerValue.TIMESTAMP
+    });
+  }
+
   function initFirebase() {
     if (!FIREBASE_CONFIG.databaseURL || typeof firebase === 'undefined') return;
     try {
-      firebase.initializeApp(FIREBASE_CONFIG);
+      const app = firebase.initializeApp(FIREBASE_CONFIG);
+      try { firebase.analytics(app); } catch (_) {}
       db = firebase.database();
       roomRef = db.ref('cozy_room_v2');
 
-      const myPresence = roomRef.child('presence/' + sessionId);
-      myPresence.set(true);
-      myPresence.onDisconnect().remove();
+      const connectedRef = db.ref('.info/connected');
+      connectedRef.on('value', snap => {
+        if (snap.val() === true) {
+          updatePresenceInFirebase();
+        }
+      });
+
       roomRef.child('presence').on('value', snap => {
-        const count = snap.numChildren();
-        document.getElementById('dotPink').classList.toggle('on', count >= 2);
+        remotePresence = snap.val() || {};
+        const entries = Object.entries(remotePresence);
+        const count = entries.length;
+        const hasBlue = entries.some(([, v]) => v && v.role === 'blue');
+        const hasPink = entries.some(([, v]) => v && v.role === 'pink');
+
+        document.getElementById('dotBlue').classList.toggle('on', hasBlue || count >= 1);
+        document.getElementById('dotPink').classList.toggle('on', hasPink || count >= 2);
+        document.getElementById('tagBlue').textContent = hasBlue ? '●' : '';
+        document.getElementById('tagPink').textContent = hasPink ? '●' : '';
+
+        const presenceWrap = document.querySelector('.presence');
+        if (presenceWrap) {
+          presenceWrap.title = count >= 2 ? 'Online Berdua ♥' : 'Terhubung (1 Online)';
+        }
+      });
+
+      // Sinkronisasi posisi karakter pasangan secara real-time
+      roomRef.child('chars').on('value', snap => {
+        const chars = snap.val();
+        if (!chars) return;
+        ['blue', 'pink'].forEach(cid => {
+          const data = chars[cid];
+          if (!data || data.by === sessionId) return;
+          if (Date.now() - (data.updatedAt || 0) > 12000) return;
+          // Jangan timpa saat sedang animasi kiss/peluk bersama
+          if (coupleAnim && coupleAnim.phase === 'acting') return;
+          const m = getMascot(cid);
+          if (m) {
+            m.remoteTarget = {
+              x: data.x,
+              y: data.y,
+              facing: data.facing || 1,
+              activity: data.activity || 'idle',
+              inBed: !!data.inBed,
+              updatedAt: Date.now()
+            };
+          }
+        });
       });
 
       roomRef.child('state').on('value', snap => {
@@ -468,10 +666,28 @@
         if (!val) return;
         if (typeof val.curtainOpen === 'boolean') roomState.curtainOpen = val.curtainOpen;
         if (typeof val.lampOn === 'boolean') roomState.lampOn = val.lampOn;
-        if (val.decors) roomState.decors = val.decors;
-        if (val.pingAt && Date.now() - val.pingAt < 3000) {
-          spawnHeart(365, 360);
-          playTone(660, 'sine', 0.12);
+        if (val.decors && !draggingKey) {
+          roomState.decors = Object.assign(JSON.parse(JSON.stringify(DEFAULT_DECORS)), val.decors);
+          localStorage.setItem('natla_decors_v2', JSON.stringify(roomState.decors));
+        }
+        if (val.pingAt && val.pingAt !== lastHandledPingAt && val.pingBy !== sessionId && Date.now() - val.pingAt < 5000) {
+          lastHandledPingAt = val.pingAt;
+          mascots.forEach(m => { m.jumpVel = -5.2; });
+          spawnParticles(355, 360, '♥', 4);
+          spawnParticles(410, 385, '♥', 4);
+          playTone(660, 'sine', 0.12, 880);
+        }
+        if (val.catPingAt && val.catPingAt !== lastHandledCatPingAt && val.catPingBy !== sessionId && Date.now() - val.catPingAt < 5000) {
+          lastHandledCatPingAt = val.catPingAt;
+          roomState.catMood = 'happy';
+          roomState.catHappyUntil = Date.now() + 3500;
+          const k = roomState.decors.karpet;
+          spawnParticles(k ? k.x + 6 : 364, (k ? k.y + 3 : 511) - 45, '♥', 4);
+          playMeow();
+        }
+        if (val.coupleAction && val.coupleAction.at !== lastHandledCoupleAt && val.coupleAction.by !== sessionId && Date.now() - val.coupleAction.at < 6000) {
+          lastHandledCoupleAt = val.coupleAction.at;
+          startCoupleAction(val.coupleAction.type, val.coupleAction.initiator || 'blue', false);
         }
         updateUIButtons();
       });
@@ -480,7 +696,7 @@
     }
   }
 
-  function pushState(ping = false) {
+  function pushState(ping = false, catPing = false, couplePayload = null) {
     localStorage.setItem('natla_decors_v2', JSON.stringify(roomState.decors));
     if (roomRef) {
       const payload = {
@@ -488,9 +704,37 @@
         lampOn: roomState.lampOn,
         decors: roomState.decors
       };
-      if (ping) payload.pingAt = Date.now();
+      if (ping) {
+        payload.pingAt = Date.now();
+        payload.pingBy = sessionId;
+      }
+      if (catPing) {
+        payload.catPingAt = Date.now();
+        payload.catPingBy = sessionId;
+      }
+      if (couplePayload) {
+        payload.coupleAction = couplePayload;
+      }
       roomRef.child('state').update(payload);
     }
+  }
+
+  function pushMyCharState(force = false) {
+    if (!roomRef || myRole === 'auto') return;
+    const now = Date.now();
+    if (!force && now - lastCharPushAt < 380) return;
+    lastCharPushAt = now;
+    const m = getMascot(myRole);
+    if (!m) return;
+    roomRef.child('chars/' + myRole).set({
+      by: sessionId,
+      x: Math.round(m.x),
+      y: Math.round(m.y),
+      facing: m.facing,
+      activity: m.activity,
+      inBed: m.inBed,
+      updatedAt: now
+    });
   }
 
   // =========================================================================
@@ -523,8 +767,20 @@
     setTimeout(() => playTone(720, 'triangle', 0.25, 440), 110);
   }
 
+  function playRomanticChime(type) {
+    if (type === 'kiss') {
+      playTone(587.33, 'sine', 0.14); // D5
+      setTimeout(() => playTone(739.99, 'sine', 0.14), 110); // F#5
+      setTimeout(() => playTone(880.00, 'sine', 0.26, 987.77), 220); // A5 -> B5
+    } else {
+      playTone(523.25, 'triangle', 0.16); // C5
+      setTimeout(() => playTone(659.25, 'triangle', 0.16), 120); // E5
+      setTimeout(() => playTone(783.99, 'triangle', 0.28), 240); // G5
+    }
+  }
+
   // =========================================================================
-  // 5. ENGINE RENDERING KANVAS 2.5D & NAVMESH PATHFINDING ANTI-NEMBUS KASUR
+  // 5. ENGINE RENDERING KANVAS 2.5D, AKTIVITAS FURNITUR & NAVMESH PATHFINDING
   // =========================================================================
   const canvas = document.getElementById('roomCanvas');
   const ctx = canvas.getContext('2d');
@@ -541,12 +797,15 @@
   let draggingKey = null;
   let dragOffset = { x: 0, y: 0 };
   let particles = [];
+  let moveIndicator = null; // { x, y, until }
+  let coupleAnim = null;    // { type: 'kiss'|'hug', initiator: 'blue'|'pink', phase: 'moving'|'acting', meetX, meetY, until }
 
+  // Graf titik jalan (Navmesh Waypoints) yang mengelilingi kasur, meja, lemari, & kamera
   const WALK_NODES = [
-    { x: 356, y: 332 }, // 0: Depan papan surat
-    { x: 412, y: 370 }, // 1: Dekat meja belajar
-    { x: 415, y: 440 }, // 2: Tengah ruangan (kanan kasur)
-    { x: 432, y: 506 }, // 3: Depan tengah (kiri kamera tripod)
+    { x: 362, y: 332 }, // 0: Depan papan surat & beanbag
+    { x: 422, y: 374 }, // 1: Depan kursi meja belajar
+    { x: 418, y: 442 }, // 2: Tengah ruangan (kanan kasur)
+    { x: 430, y: 508 }, // 3: Depan tengah (kiri kamera tripod)
     { x: 374, y: 592 }, // 4: Ujung lantai depan bawah
     { x: 262, y: 578 }, // 5: Depan kaki kasur
     { x: 184, y: 534 }  // 6: Lantai depan kiri
@@ -580,22 +839,66 @@
     return [endIdx];
   }
 
+  function nearestNode(x, y) {
+    let best = 2, bestD = Infinity;
+    WALK_NODES.forEach((n, idx) => {
+      const d = Math.hypot(n.x - x, n.y - y);
+      if (d < bestD) { bestD = d; best = idx; }
+    });
+    return best;
+  }
+
+  // Daftar aktivitas interaktif di dalam kamar
+  function getActivitySpot(actName, mascotId) {
+    const bb = roomState.decors.beanbag || DEFAULT_DECORS.beanbag;
+    const kp = roomState.decors.karpet || DEFAULT_DECORS.karpet;
+    switch (actName) {
+      case 'desk':
+        return { node: 1, x: 495, y: 396, facing: 1, icon: '💻', duration: 240 };
+      case 'beanbag':
+        return { node: 0, x: bb.x, y: bb.y - 6, facing: 1, icon: '♪', duration: 220 };
+      case 'board':
+        return { node: 0, x: 364, y: 328, facing: 1, icon: '💌', duration: 160 };
+      case 'cat':
+        return { node: 3, x: kp.x + 42, y: kp.y - 4, facing: -1, icon: '🐾', duration: 170 };
+      case 'camera':
+        return { node: 3, x: 432, y: 506, facing: 1, icon: '📸', duration: 150 };
+      case 'bed':
+        return {
+          node: mascotId === 'blue' ? 2 : 5,
+          x: mascotId === 'blue' ? 162 : 232,
+          y: mascotId === 'blue' ? 396 : 434,
+          facing: 1,
+          icon: '💤',
+          duration: 280
+        };
+      default:
+        return null;
+    }
+  }
+
   const mascots = [
     {
       id: 'blue', prefix: 'biru',
-      x: 412, y: 370, currentNode: 1, pathQueue: [],
-      bedX: 162, bedY: 396,
-      inBed: false,
-      speed: 0.55, stepTimer: 0, frame: 0, waitTimer: 65, jumpY: 0, jumpVel: 0
+      x: 495, y: 396, currentNode: 1, pathQueue: [],
+      finalDest: null, pendingActivity: null, activity: 'desk', activityTimer: 160,
+      bedX: 162, bedY: 396, inBed: false,
+      facing: 1, speed: 0.72, stepTimer: 0, frame: 0, waitTimer: 40,
+      jumpY: 0, jumpVel: 0, remoteTarget: null
     },
     {
       id: 'pink', prefix: 'pink',
       x: 374, y: 592, currentNode: 4, pathQueue: [],
-      bedX: 232, bedY: 434,
-      inBed: false,
-      speed: 0.50, stepTimer: 12, frame: 0, waitTimer: 35, jumpY: 0, jumpVel: 0
+      finalDest: null, pendingActivity: null, activity: 'idle', activityTimer: 0,
+      bedX: 232, bedY: 434, inBed: false,
+      facing: -1, speed: 0.68, stepTimer: 12, frame: 0, waitTimer: 35,
+      jumpY: 0, jumpVel: 0, remoteTarget: null
     }
   ];
+
+  function getMascot(id) {
+    return mascots.find(m => m.id === id);
+  }
 
   function getActiveHour() {
     return manualHour !== null ? manualHour : new Date().getHours();
@@ -606,14 +909,106 @@
     return hr >= 22 || hr < 6;
   }
 
-  function spawnHeart(x, y) {
-    for (let i = 0; i < 4; i++) {
+  function spawnParticles(x, y, symbol = '♥', count = 4) {
+    for (let i = 0; i < count; i++) {
       particles.push({
-        x: x + (Math.random() - 0.5) * 26,
-        y: y - 10 - Math.random() * 14,
-        vy: -0.6 - Math.random() * 0.4,
+        x: x + (Math.random() - 0.5) * 32,
+        y: y - 10 - Math.random() * 16,
+        vy: -0.55 - Math.random() * 0.45,
         alpha: 1,
-        text: '♥'
+        text: symbol
+      });
+    }
+  }
+
+  // Mengirim karakter ke aktivitas tertentu atau titik lantai tertentu
+  function commandMascotToActivity(m, actName) {
+    const spot = getActivitySpot(actName, m.id);
+    if (!spot) return;
+
+    // Jika sedang di kasur, keluar dulu lewat node samping kasur
+    if (m.inBed) {
+      const exitNode = m.id === 'blue' ? 2 : 5;
+      m.x = WALK_NODES[exitNode].x;
+      m.y = WALK_NODES[exitNode].y;
+      m.currentNode = exitNode;
+      m.inBed = false;
+    }
+
+    m.activity = 'walking';
+    m.activityTimer = 0;
+    m.pendingActivity = { name: actName, spot };
+    const startNode = nearestNode(m.x, m.y);
+    m.currentNode = startNode;
+    m.pathQueue = findNodePath(startNode, spot.node).slice(1);
+    m.finalDest = { x: spot.x, y: spot.y, facing: spot.facing };
+  }
+
+  function commandMascotToFloor(m, targetX, targetY, destFacing = null) {
+    if (m.inBed) {
+      const exitNode = m.id === 'blue' ? 2 : 5;
+      m.x = WALK_NODES[exitNode].x;
+      m.y = WALK_NODES[exitNode].y;
+      m.currentNode = exitNode;
+      m.inBed = false;
+    }
+    m.activity = 'walking';
+    m.activityTimer = 0;
+    m.pendingActivity = null;
+    const startNode = nearestNode(m.x, m.y);
+    const endNode = nearestNode(targetX, targetY);
+    m.currentNode = startNode;
+    m.pathQueue = findNodePath(startNode, endNode).slice(1);
+    m.finalDest = { x: targetX, y: targetY, facing: destFacing };
+  }
+
+  // Memulai interaksi couple: Kiss atau Peluk
+  function startCoupleAction(type, initiatorId, broadcast = true) {
+    const actor = getMascot(initiatorId) || mascots[0];
+    const partner = getMascot(initiatorId === 'blue' ? 'pink' : 'blue');
+    if (!actor || !partner) return;
+
+    // Tentukan titik pertemuan di lantai terbuka (jika partner di kasur/kursi, ketemu di tengah lantai)
+    let meetX = partner.x;
+    let meetY = partner.y;
+    if (partner.inBed || partner.activity === 'desk' || partner.activity === 'beanbag') {
+      meetX = 416;
+      meetY = 446;
+      commandMascotToFloor(partner, meetX + 16, meetY, -1);
+    } else {
+      partner.pathQueue = [];
+      partner.finalDest = null;
+      partner.pendingActivity = null;
+      partner.activity = 'waiting_love';
+    }
+
+    const gap = type === 'hug' ? 17 : 25;
+    // Pastikan yang di kiri menghadap kanan (1) dan yang di kanan menghadap kiri (-1)
+    const actorGoesLeft = actor.x <= meetX;
+    const actorTargetX = actorGoesLeft ? meetX - gap : meetX + gap;
+    const partnerTargetX = actorGoesLeft ? meetX + 4 : meetX - 4;
+
+    if (partner.activity === 'waiting_love') {
+      partner.x = partnerTargetX;
+      partner.facing = actorGoesLeft ? -1 : 1;
+    }
+
+    commandMascotToFloor(actor, actorTargetX, meetY, actorGoesLeft ? 1 : -1);
+
+    coupleAnim = {
+      type,
+      initiator: initiatorId,
+      phase: 'moving',
+      actorLeft: actorGoesLeft,
+      until: Date.now() + 9000
+    };
+
+    if (broadcast) {
+      pushState(false, false, {
+        type,
+        initiator: initiatorId,
+        by: sessionId,
+        at: Date.now()
       });
     }
   }
@@ -621,7 +1016,7 @@
   const HIT_ZONES = [
     { id: 'curtain',    label: 'Gorden (Buka/Tutup)', x: 195, y: 85,  w: 135, h: 190 },
     { id: 'surat',      label: '💌 Buka Kapsul Waktu', x: 382, y: 112, w: 110, h: 125 },
-    { id: 'games',      label: '🎮 Buka Mini Games',   x: 452, y: 248, w: 145, h: 135 },
+    { id: 'games',      label: '🎮 Buka Mini Games',   x: 475, y: 245, w: 105, h: 95 },
     { id: 'photobooth', label: '📸 Buka Photobooth',   x: 472, y: 425, w: 74,  h: 135 }
   ];
 
@@ -630,7 +1025,7 @@
     const fillRatio = isMobile ? 0.98 : 0.94;
     const scale = Math.min(cw / BASE_W, ch / BASE_H) * fillRatio;
     const ox = (cw - BASE_W * scale) / 2;
-    const oy = (ch - BASE_H * scale) / 2 - (isMobile && ch > cw ? 6 : 0);
+    const oy = (ch - BASE_H * scale) / 2 - (isMobile && ch > cw ? 14 : 0);
     return { scale, ox, oy };
   }
 
@@ -646,12 +1041,70 @@
   function updateSimulation() {
     const sleeping = isSleepTime();
 
+    // Update kucing mood
     if (roomState.catMood === 'happy' && Date.now() > roomState.catHappyUntil) {
       roomState.catMood = sleeping ? 'sleep' : 'sit';
     } else if (roomState.catMood !== 'happy') {
       roomState.catMood = sleeping ? 'sleep' : (Math.sin(Date.now() / 6000) > 0.2 ? 'sit' : 'sleep');
     }
 
+    // Update animasi couple (Kiss / Peluk)
+    if (coupleAnim) {
+      const actor = getMascot(coupleAnim.initiator);
+      const partner = getMascot(coupleAnim.initiator === 'blue' ? 'pink' : 'blue');
+
+      if (coupleAnim.phase === 'moving') {
+        const actorArrived = actor.pathQueue.length === 0 && !actor.finalDest;
+        const partnerArrived = partner.pathQueue.length === 0 && !partner.finalDest;
+        if (actorArrived && partnerArrived) {
+          coupleAnim.phase = 'acting';
+          coupleAnim.startedAt = Date.now();
+          coupleAnim.until = Date.now() + 3800;
+          actor.activity = coupleAnim.type;
+          partner.activity = coupleAnim.type;
+
+          // Hadapkan keduanya saling berhadapan!
+          if (actor.x <= partner.x) {
+            actor.facing = 1;
+            partner.facing = -1;
+          } else {
+            actor.facing = -1;
+            partner.facing = 1;
+          }
+
+          actor.jumpVel = -4.6;
+          partner.jumpVel = -4.6;
+
+          const midX = (actor.x + partner.x) / 2;
+          const midY = Math.min(actor.y, partner.y) - 62;
+          spawnParticles(midX, midY, coupleAnim.type === 'kiss' ? '💋' : '🤗', 2);
+          spawnParticles(midX, midY - 8, '♥', 5);
+          playRomanticChime(coupleAnim.type);
+
+          const label = coupleAnim.type === 'kiss'
+            ? 'Mochi Biru & Pink ciuman~ 💋'
+            : 'Berpelukan hangat~ 🤗';
+          showCenterToast(label, 2400);
+        } else if (Date.now() > coupleAnim.until) {
+          coupleAnim = null;
+        }
+      } else if (coupleAnim.phase === 'acting') {
+        if (Math.random() < 0.06) {
+          const midX = (actor.x + partner.x) / 2;
+          spawnParticles(midX, actor.y - 68, '♥', 1);
+        }
+        if (Date.now() > coupleAnim.until) {
+          actor.activity = 'idle';
+          partner.activity = 'idle';
+          actor.waitTimer = 45;
+          partner.waitTimer = 55;
+          coupleAnim = null;
+          if (myRole !== 'auto') pushMyCharState(true);
+        }
+      }
+    }
+
+    // Update masing-masing maskot
     mascots.forEach(m => {
       if (m.jumpY < 0 || m.jumpVel !== 0) {
         m.jumpY += m.jumpVel;
@@ -662,17 +1115,51 @@
         }
       }
 
-      if (sleeping) {
+      const isControlledByMe = (myRole === m.id);
+      const hasFreshRemote = !isControlledByMe && m.remoteTarget && (Date.now() - m.remoteTarget.updatedAt < 8000);
+
+      // Jika dikontrol pasangan dari perangkat jauh (Firebase)
+      if (hasFreshRemote && (!coupleAnim || coupleAnim.phase !== 'acting')) {
+        const rt = m.remoteTarget;
+        const dx = rt.x - m.x;
+        const dy = rt.y - m.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 2) {
+          m.x += dx * 0.14;
+          m.y += dy * 0.14;
+          if (Math.abs(dx) > 0.25) m.facing = dx < 0 ? -1 : 1;
+          m.stepTimer++;
+          if (m.stepTimer % 10 === 0) m.frame = m.frame === 1 ? 2 : 1;
+        } else {
+          m.x = rt.x;
+          m.y = rt.y;
+          m.facing = rt.facing;
+          m.frame = 0;
+        }
+        m.activity = rt.activity;
+        m.inBed = rt.inBed;
+        return;
+      }
+
+      // Sedang dalam animasi couple (kiss / peluk)
+      if (coupleAnim && coupleAnim.phase === 'acting') {
+        m.frame = 0;
+        return;
+      }
+
+      // Tidur malam otomatis (jika tidak sedang dikontrol jalan manual)
+      if (sleeping && !isControlledByMe && !coupleAnim) {
         if (!m.inBed) {
           const bedsideNode = m.id === 'blue' ? 2 : 5;
           if (m.currentNode !== bedsideNode && m.pathQueue.length === 0) {
             m.pathQueue = findNodePath(m.currentNode, bedsideNode).slice(1);
           }
           if (m.pathQueue.length > 0) {
-            stepAlongPath(m);
+            stepMascotMovement(m);
             return;
           }
           m.inBed = true;
+          m.activity = 'bed';
         }
         m.x += (m.bedX - m.x) * 0.12;
         m.y += (m.bedY - m.y) * 0.12;
@@ -680,65 +1167,133 @@
         return;
       }
 
-      if (m.inBed) {
+      // Bangun pagi otomatis
+      if (!sleeping && m.inBed && m.activity !== 'bed') {
         const exitNode = m.id === 'blue' ? 2 : 5;
         const exitPt = WALK_NODES[exitNode];
-        const dx = exitPt.x - m.x;
-        const dy = exitPt.y - m.y;
-        if (Math.hypot(dx, dy) > 6) {
-          m.x += dx * 0.12;
-          m.y += dy * 0.12;
-          return;
-        }
         m.x = exitPt.x;
         m.y = exitPt.y;
         m.currentNode = exitNode;
         m.inBed = false;
+        m.activity = 'idle';
         m.waitTimer = 25;
       }
 
-      if (m.pathQueue.length > 0) {
-        stepAlongPath(m);
-      } else if (m.waitTimer > 0) {
-        m.waitTimer--;
+      // Jalankan pathfinding & finalDest
+      if (m.pathQueue.length > 0 || m.finalDest) {
+        stepMascotMovement(m);
+        if (isControlledByMe) pushMyCharState(false);
+        return;
+      }
+
+      // Sedang menjalankan aktivitas duduk/santai/tidur siang
+      if (m.activityTimer > 0) {
+        m.activityTimer--;
         m.frame = 0;
-        if (m.waitTimer === 0) {
-          let targetNode = Math.floor(Math.random() * WALK_NODES.length);
-          if (targetNode === m.currentNode) {
-            targetNode = (m.currentNode + 2) % WALK_NODES.length;
+        if (m.activityTimer === 0 && !isControlledByMe) {
+          if (m.inBed) {
+            const exitNode = m.id === 'blue' ? 2 : 5;
+            m.x = WALK_NODES[exitNode].x;
+            m.y = WALK_NODES[exitNode].y;
+            m.currentNode = exitNode;
+            m.inBed = false;
           }
-          m.pathQueue = findNodePath(m.currentNode, targetNode).slice(1);
+          m.activity = 'idle';
+          m.waitTimer = 35;
+        }
+        return;
+      }
+
+      // AI otonom (hanya untuk karakter yang tidak sedang dipilih user)
+      if (!isControlledByMe && m.activity !== 'waiting_love') {
+        if (m.waitTimer > 0) {
+          m.waitTimer--;
+          m.frame = 0;
+          if (m.waitTimer === 0) {
+            // Pilih aktivitas seru (kursi meja, beanbag, papan surat, kucing, kamera) atau jalan santai
+            const roll = Math.random();
+            if (roll < 0.65) {
+              const acts = ['desk', 'beanbag', 'board', 'cat', 'camera'];
+              // Hindari kursi meja dipakai berdua bersamaan
+              const other = getMascot(m.id === 'blue' ? 'pink' : 'blue');
+              const filtered = acts.filter(a => !(other && other.activity === a && (a === 'desk' || a === 'beanbag')));
+              const chosen = filtered[Math.floor(Math.random() * filtered.length)];
+              commandMascotToActivity(m, chosen);
+            } else {
+              let targetNode = Math.floor(Math.random() * WALK_NODES.length);
+              if (targetNode === m.currentNode) {
+                targetNode = (m.currentNode + 2) % WALK_NODES.length;
+              }
+              m.pathQueue = findNodePath(m.currentNode, targetNode).slice(1);
+              m.activity = 'walking';
+            }
+          }
         }
       }
     });
 
     particles.forEach(p => {
       p.y += p.vy;
-      p.alpha -= 0.015;
+      p.alpha -= 0.014;
     });
     particles = particles.filter(p => p.alpha > 0);
   }
 
-  function stepAlongPath(m) {
-    const nextIdx = m.pathQueue[0];
-    const target = WALK_NODES[nextIdx];
+  function stepMascotMovement(m) {
+    let target = null;
+    let isWaypoint = false;
+
+    if (m.pathQueue.length > 0) {
+      target = WALK_NODES[m.pathQueue[0]];
+      isWaypoint = true;
+    } else if (m.finalDest) {
+      target = m.finalDest;
+    }
+
+    if (!target) {
+      m.frame = 0;
+      return;
+    }
+
     const dx = target.x - m.x;
     const dy = target.y - m.y;
     const dist = Math.hypot(dx, dy);
-    if (dist <= m.speed * 1.5) {
+
+    // Update arah hadap (facing: -1 kiri, 1 kanan) agar TIDAK PERNAH jalan mundur!
+    if (Math.abs(dx) > 0.15) {
+      m.facing = dx < 0 ? -1 : 1;
+    }
+
+    if (dist <= m.speed * 1.4) {
       m.x = target.x;
       m.y = target.y;
-      m.currentNode = nextIdx;
-      m.pathQueue.shift();
-      if (m.pathQueue.length === 0) {
-        m.waitTimer = 65 + Math.floor(Math.random() * 95);
+      if (isWaypoint) {
+        m.currentNode = m.pathQueue.shift();
+      } else {
+        if (m.finalDest && m.finalDest.facing) {
+          m.facing = m.finalDest.facing;
+        }
+        m.finalDest = null;
+      }
+
+      if (m.pathQueue.length === 0 && !m.finalDest) {
         m.frame = 0;
+        if (m.pendingActivity) {
+          m.activity = m.pendingActivity.name;
+          m.activityTimer = m.pendingActivity.spot.duration;
+          if (m.activity === 'bed') m.inBed = true;
+          m.pendingActivity = null;
+        } else if (m.activity === 'walking') {
+          m.activity = 'idle';
+          m.waitTimer = 60 + Math.floor(Math.random() * 80);
+        }
+        if (myRole === m.id) pushMyCharState(true);
       }
     } else {
       m.x += (dx / dist) * m.speed;
       m.y += (dy / dist) * m.speed;
       m.stepTimer++;
-      if (m.stepTimer % 13 === 0) {
+      if (m.stepTimer % 11 === 0) {
         m.frame = m.frame === 1 ? 2 : 1;
       }
     }
@@ -764,6 +1319,7 @@
     const hr = getActiveHour();
     const isNight = (hr >= 19 || hr < 6);
 
+    // Langit malam & bintang di kaca jendela
     if (isNight) {
       rctx.save();
       rctx.beginPath();
@@ -784,6 +1340,7 @@
       rctx.restore();
     }
 
+    // Cahaya matahari pagi/siang
     if (roomState.curtainOpen && hr >= 6 && hr <= 17) {
       rctx.save();
       const grad = rctx.createLinearGradient(230, 130, 420, 460);
@@ -800,6 +1357,7 @@
       rctx.restore();
     }
 
+    // Gorden Pink
     const curtainImg = roomState.curtainOpen ? IMG.gorden_buka : IMG.gorden_tutup;
     if (curtainImg) {
       rctx.save();
@@ -809,11 +1367,37 @@
       rctx.restore();
     }
 
+    // Karpet
     const karpet = roomState.decors.karpet;
     if (IMG.karpet && karpet) {
-      drawCenteredSprite(rctx, IMG.karpet, karpet.x, karpet.y, 1.15);
+      drawCenteredSprite(rctx, IMG.karpet, karpet.x, karpet.y, 1.15, false);
     }
 
+    // Target indicator di lantai saat user tap tujuan jalan
+    if (moveIndicator && Date.now() < moveIndicator.until) {
+      const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 120);
+      rctx.save();
+      rctx.strokeStyle = `rgba(122, 31, 36, ${(0.35 + pulse * 0.4).toFixed(2)})`;
+      rctx.lineWidth = 2;
+      rctx.beginPath();
+      rctx.ellipse(moveIndicator.x, moveIndicator.y - 2, 12 + pulse * 4, 5 + pulse * 2, 0, 0, Math.PI * 2);
+      rctx.stroke();
+      rctx.restore();
+    }
+
+    // Layar laptop menyala saat ada karakter duduk di kursi meja belajar
+    const someoneAtDesk = mascots.some(m => m.activity === 'desk');
+    if (someoneAtDesk) {
+      rctx.save();
+      const glow = 0.25 + 0.12 * Math.sin(Date.now() / 220);
+      rctx.fillStyle = `rgba(147, 197, 253, ${glow.toFixed(2)})`;
+      rctx.beginPath();
+      rctx.ellipse(518, 305, 28, 18, -0.3, 0, Math.PI * 2);
+      rctx.fill();
+      rctx.restore();
+    }
+
+    // Kumpulan Objek Ber-Y-Sort
     const drawList = [];
 
     Object.entries(roomState.decors).forEach(([key, d]) => {
@@ -823,7 +1407,7 @@
         drawList.push({
           y: d.y,
           draw: () => {
-            drawCenteredSprite(rctx, spr, d.x, d.y, 0.90);
+            drawCenteredSprite(rctx, spr, d.x, d.y, 0.90, false);
             if (decorMode) {
               rctx.save();
               rctx.strokeStyle = '#7A1F24';
@@ -837,6 +1421,7 @@
       }
     });
 
+    // Kucing Mochi
     const catX = karpet ? karpet.x + 6 : 364;
     const catY = karpet ? karpet.y + 3 : 511;
     const catKey = roomState.catMood === 'happy' ? 'kucing_senang'
@@ -845,40 +1430,124 @@
       const breathe = roomState.catMood === 'sleep' ? Math.sin(Date.now() / 550) * 1.1 : 0;
       drawList.push({
         y: catY,
-        draw: () => drawCenteredSprite(rctx, IMG[catKey], catX, catY + breathe, 0.72)
+        draw: () => drawCenteredSprite(rctx, IMG[catKey], catX, catY + breathe, 0.72, false)
       });
     }
 
-    const sleeping = isSleepTime();
-    mascots.forEach(m => {
-      const isSleepingPose = sleeping && m.inBed;
-      const key = isSleepingPose
-        ? `${m.prefix}_tidur`
-        : m.frame === 1 ? `${m.prefix}_jalan1`
-        : m.frame === 2 ? `${m.prefix}_jalan2` : `${m.prefix}_diam`;
-      const spr = IMG[key];
-      if (spr) {
-        drawList.push({
-          y: m.y,
-          draw: () => {
-            if (!isSleepingPose) {
-              rctx.save();
-              rctx.fillStyle = 'rgba(42, 33, 30, 0.18)';
-              rctx.beginPath();
-              rctx.ellipse(m.x, m.y - 2, 16, 6, 0, 0, Math.PI * 2);
-              rctx.fill();
-              rctx.restore();
-            }
-            const bob = (!isSleepingPose && m.frame > 0) ? -3 : 0;
-            drawCenteredSprite(rctx, spr, m.x, m.y + m.jumpY + bob, isSleepingPose ? 0.74 : 0.78);
-          }
-        });
+    // Cek apakah sedang dalam animasi spesial couple (Kiss / Peluk) dengan sprite gabungan
+    const isActingCouple = coupleAnim && coupleAnim.phase === 'acting';
+    let coupleSpriteKey = null;
+    if (isActingCouple) {
+      const elapsed = Date.now() - (coupleAnim.startedAt || Date.now());
+      if (coupleAnim.type === 'hug') {
+        coupleSpriteKey = Math.floor(elapsed / 280) % 2 === 0 ? 'couple_hug1' : 'couple_hug2';
+      } else {
+        if (elapsed < 650) {
+          coupleSpriteKey = 'couple_kiss1';
+        } else {
+          coupleSpriteKey = Math.floor(elapsed / 260) % 2 === 0 ? 'couple_kiss2' : 'couple_kiss1';
+        }
       }
-    });
+    }
+
+    if (isActingCouple && IMG[coupleSpriteKey]) {
+      const b = getMascot('blue');
+      const p = getMascot('pink');
+      const midX = (b.x + p.x) / 2;
+      const midY = Math.max(b.y, p.y);
+      const cSpr = IMG[coupleSpriteKey];
+      drawList.push({
+        y: midY,
+        draw: () => {
+          rctx.save();
+          rctx.fillStyle = 'rgba(42, 33, 30, 0.20)';
+          rctx.beginPath();
+          rctx.ellipse(midX, midY - 2, 32, 9, 0, 0, Math.PI * 2);
+          rctx.fill();
+          rctx.restore();
+
+          const jumpOffset = Math.min(b.jumpY, p.jumpY);
+          drawCenteredSprite(rctx, cSpr, midX, midY + jumpOffset, 0.80, false);
+        }
+      });
+    } else {
+      // Maskot Biru & Pink individual
+      mascots.forEach(m => {
+        const isSleepingPose = m.inBed;
+        const isSittingPose = !isSleepingPose && (m.activity === 'desk' || m.activity === 'beanbag') && IMG[`${m.prefix}_duduk`];
+        const key = isSleepingPose
+          ? `${m.prefix}_tidur`
+          : isSittingPose
+          ? `${m.prefix}_duduk`
+          : m.frame === 1 ? `${m.prefix}_jalan1`
+          : m.frame === 2 ? `${m.prefix}_jalan2` : `${m.prefix}_diam`;
+        const spr = IMG[key];
+        if (spr) {
+          drawList.push({
+            y: m.y,
+            draw: () => {
+              // Bayangan bawah kaki
+              if (!isSleepingPose) {
+                rctx.save();
+                rctx.fillStyle = 'rgba(42, 33, 30, 0.18)';
+                rctx.beginPath();
+                rctx.ellipse(m.x, m.y - 2, 16, 6, 0, 0, Math.PI * 2);
+                rctx.fill();
+                rctx.restore();
+              }
+
+              let swayX = 0;
+              let bobY = (!isSleepingPose && !isSittingPose && m.frame > 0) ? -3 : 0;
+              if (m.activity === 'hug') {
+                swayX = Math.sin(Date.now() / 240) * 2.2;
+              } else if (m.activity === 'desk') {
+                bobY = Math.sin(Date.now() / 160) * 1.1;
+              }
+
+              const flipX = !isSleepingPose && (m.facing === -1);
+              drawCenteredSprite(
+                rctx,
+                spr,
+                m.x + swayX,
+                m.y + m.jumpY + bobY,
+                isSleepingPose ? 0.74 : 0.78,
+                flipX
+              );
+
+              // Indikator karakter yang sedang kamu kontrol
+              if (myRole === m.id && !isSleepingPose) {
+                const arrowBob = Math.sin(Date.now() / 280) * 2.5;
+                rctx.save();
+                rctx.fillStyle = m.id === 'blue' ? '#3B82F6' : '#EC4899';
+                rctx.beginPath();
+                const ay = m.y - (isSittingPose ? 76 : 92) + m.jumpY + arrowBob;
+                rctx.moveTo(m.x, ay + 6);
+                rctx.lineTo(m.x - 5, ay);
+                rctx.lineTo(m.x + 5, ay);
+                rctx.closePath();
+                rctx.fill();
+                rctx.restore();
+              }
+
+              // Gelembung ikon aktivitas kecil
+              const actIcons = { desk: '💻', beanbag: '♪', board: '💌', cat: '🐾', camera: '📸' };
+              if (actIcons[m.activity]) {
+                const floatY = Math.sin(Date.now() / 360) * 2;
+                rctx.save();
+                rctx.font = '13px sans-serif';
+                rctx.fillText(actIcons[m.activity], m.x + 14, m.y - (isSittingPose ? 56 : 68) + floatY);
+                rctx.restore();
+              }
+            }
+          });
+        }
+      });
+    }
 
     drawList.sort((a, b) => a.y - b.y);
     drawList.forEach(item => item.draw());
 
+    // Pencahayaan Sore / Malam di dalam siluet kamar
     rctx.save();
     rctx.globalCompositeOperation = 'source-atop';
     if (hr >= 17 && hr <= 18) {
@@ -899,6 +1568,7 @@
     rctx.restore();
     rctx.restore();
 
+    // Gambar ke kanvas utama
     ctx.save();
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, cw, ch);
@@ -910,10 +1580,11 @@
 
     ctx.drawImage(roomBuffer, 0, 0);
 
+    // Partikel Hati / Kiss / Hug
     particles.forEach(p => {
       ctx.save();
       ctx.globalAlpha = Math.max(0, p.alpha);
-      ctx.font = 'bold 16px sans-serif';
+      ctx.font = 'bold 17px sans-serif';
       ctx.fillStyle = '#E11D48';
       ctx.fillText(p.text, p.x, p.y);
       ctx.restore();
@@ -922,10 +1593,20 @@
     ctx.restore();
   }
 
-  function drawCenteredSprite(targetCtx, img, footX, footY, scale = 1) {
-    const w = img.width * scale;
-    const h = img.height * scale;
-    targetCtx.drawImage(img, Math.round(footX - w / 2), Math.round(footY - h), Math.round(w), Math.round(h));
+  function drawCenteredSprite(targetCtx, img, footX, footY, scale = 1, flipX = false) {
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const dx = Math.round(footX);
+    const dy = Math.round(footY);
+    if (flipX) {
+      targetCtx.save();
+      targetCtx.translate(dx, dy);
+      targetCtx.scale(-1, 1);
+      targetCtx.drawImage(img, -Math.round(w / 2), -h, w, h);
+      targetCtx.restore();
+    } else {
+      targetCtx.drawImage(img, dx - Math.round(w / 2), dy - h, w, h);
+    }
   }
 
   function loop() {
@@ -935,14 +1616,14 @@
   }
 
   // =========================================================================
-  // 6. INTERAKSI KLIK, TOUCH, HOVER & DRAG DECOR
+  // 6. INTERAKSI KLIK, TOUCH, KONTROL LANTAI & DRAG DECOR
   // =========================================================================
   const tooltip = document.getElementById('tooltip');
   let touchToastTimer = null;
 
   function showTooltipAt(text, clientX, clientY, autoHideMs = 0) {
     tooltip.textContent = text;
-    const clampedX = Math.max(70, Math.min(window.innerWidth - 70, clientX));
+    const clampedX = Math.max(85, Math.min(window.innerWidth - 85, clientX));
     const clampedY = Math.max(60, clientY);
     tooltip.style.left = clampedX + 'px';
     tooltip.style.top = clampedY + 'px';
@@ -953,15 +1634,32 @@
     }
   }
 
+  function showCenterToast(text, duration = 2000) {
+    showTooltipAt(text, window.innerWidth / 2, Math.max(115, window.innerHeight * 0.22), duration);
+  }
+
+  // Cek apakah titik di dalam poligon lantai berjalan yang aman (di luar kasur/meja/lemari/tripod)
+  function isWalkableFloor(px, py) {
+    // Area diamond lantai terbuka
+    if (px < 165 || px > 475 || py < 315 || py > 610) return false;
+    // Hindari kotak kasur (x < 372 && y < 465)
+    if (px < 372 && py < 468) return false;
+    // Hindari segitiga kiri kasur
+    if (px < 260 && py < 535) return false;
+    // Hindari area meja & lemari kanan
+    if (px > 445 && py < 430) return false;
+    // Hindari tripod kamera
+    if (px > 460 && py > 440) return false;
+    return true;
+  }
+
   canvas.addEventListener('pointerdown', e => {
-    // Tutup popover waktu jika tap di luar popover
-    if (timePop.classList.contains('open')) {
-      timePop.classList.remove('open');
-    }
+    timePop.classList.remove('open');
+    rolePop.classList.remove('open');
 
     const pt = screenToBase(e.clientX, e.clientY);
     const isTouch = e.pointerType === 'touch';
-    const touchPad = isTouch ? 14 : 0;
+    const touchPad = isTouch ? 12 : 0;
 
     if (decorMode) {
       const keys = Object.keys(roomState.decors).reverse();
@@ -981,12 +1679,13 @@
       }
     }
 
+    // 1. Cek klik Maskot Biru / Pink
     for (const m of mascots) {
-      if (Math.abs(pt.x - m.x) < 34 + touchPad &&
+      if (Math.abs(pt.x - m.x) < 32 + touchPad &&
           pt.y >= m.y - 80 - touchPad &&
           pt.y <= m.y + 10 + touchPad) {
         m.jumpVel = -5.5;
-        spawnHeart(m.x, m.y - 60);
+        spawnParticles(m.x, m.y - 60, '♥', 4);
         if (isTouch) showTooltipAt(m.id === 'blue' ? 'Mochi Biru ♥' : 'Mochi Pink ♥', e.clientX, e.clientY, 1100);
         playTone(580, 'sine', 0.1, 880);
         pushState(true);
@@ -994,23 +1693,29 @@
       }
     }
 
+    // 2. Cek klik Kucing Mochi
     const karpet = roomState.decors.karpet;
     const catX = karpet ? karpet.x + 6 : 364;
     const catY = karpet ? karpet.y + 3 : 511;
-    if (Math.abs(pt.x - catX) < 42 + touchPad &&
-        pt.y >= catY - 65 - touchPad &&
+    if (Math.abs(pt.x - catX) < 38 + touchPad &&
+        pt.y >= catY - 58 - touchPad &&
         pt.y <= catY + 12 + touchPad) {
       roomState.catMood = 'happy';
       roomState.catHappyUntil = Date.now() + 3500;
-      spawnHeart(catX, catY - 45);
+      spawnParticles(catX, catY - 45, '♥', 4);
+      if (myRole !== 'auto') {
+        const me = getMascot(myRole);
+        if (me) commandMascotToActivity(me, 'cat');
+      }
       if (isTouch) showTooltipAt('Mochi: Meow~ ♥', e.clientX, e.clientY, 1200);
       playMeow();
+      pushState(false, true);
       return;
     }
 
+    // 3. Cek klik zona objek portal / gorden
     for (const z of HIT_ZONES) {
-      if (pt.x >= z.x - touchPad && pt.x <= z.x + z.w + touchPad &&
-          pt.y >= z.y - touchPad && pt.y <= z.y + z.h + touchPad) {
+      if (pt.x >= z.x && pt.x <= z.x + z.w && pt.y >= z.y && pt.y <= z.y + z.h) {
         if (z.id === 'curtain') {
           roomState.curtainOpen = !roomState.curtainOpen;
           if (isTouch) {
@@ -1022,6 +1727,45 @@
           if (isTouch) showTooltipAt(z.label, e.clientX, e.clientY, 900);
           openPortal(z.id);
         }
+        return;
+      }
+    }
+
+    // 4. Jika user sedang mengontrol karakter (Cowo / Cewe): tap kursi meja, beanbag, kasur, atau lantai untuk berjalan!
+    if (myRole !== 'auto') {
+      const me = getMascot(myRole);
+      if (!me) return;
+
+      // Tap kursi / meja belajar bawah -> duduk di kursi meja!
+      if (pt.x >= 460 && pt.x <= 585 && pt.y >= 345 && pt.y <= 435) {
+        commandMascotToActivity(me, 'desk');
+        moveIndicator = { x: 495, y: 396, until: Date.now() + 1200 };
+        playTone(520, 'sine', 0.07);
+        return;
+      }
+
+      // Tap beanbag -> santai di beanbag!
+      const bb = roomState.decors.beanbag;
+      if (bb && Math.abs(pt.x - bb.x) <= 45 && Math.abs(pt.y - (bb.y - 25)) <= 45) {
+        commandMascotToActivity(me, 'beanbag');
+        moveIndicator = { x: bb.x, y: bb.y, until: Date.now() + 1200 };
+        playTone(520, 'sine', 0.07);
+        return;
+      }
+
+      // Tap kasur -> naik tidur di kasur!
+      if (pt.x >= 85 && pt.x <= 345 && pt.y >= 295 && pt.y <= 475) {
+        commandMascotToActivity(me, 'bed');
+        moveIndicator = { x: me.bedX, y: me.bedY, until: Date.now() + 1200 };
+        playTone(420, 'sine', 0.08);
+        return;
+      }
+
+      // Tap area lantai kayu terbuka -> jalan ke titik tersebut!
+      if (isWalkableFloor(pt.x, pt.y)) {
+        commandMascotToFloor(me, Math.round(pt.x), Math.round(pt.y));
+        moveIndicator = { x: pt.x, y: pt.y, until: Date.now() + 1100 };
+        playTone(480, 'sine', 0.05);
         return;
       }
     }
@@ -1054,6 +1798,13 @@
           break;
         }
       }
+      if (!hoverText && myRole !== 'auto') {
+        if (pt.x >= 460 && pt.x <= 585 && pt.y >= 345 && pt.y <= 435) {
+          hoverText = '🪑 Duduk di Kursi Meja';
+        } else if (pt.x >= 85 && pt.x <= 345 && pt.y >= 295 && pt.y <= 475) {
+          hoverText = '💤 Tiduran di Kasur';
+        }
+      }
     }
 
     if (hoverText) {
@@ -1071,7 +1822,89 @@
   });
 
   // =========================================================================
-  // 7. MODAL PORTAL 3D (KAPSUL WAKTU, PHOTOBOOTH, GAMES)
+  // 7. KONTROL PILIHAN KARAKTER (COWO / CEWE) & AKSI KISS / PELUK
+  // =========================================================================
+  const roleChipBtn = document.getElementById('roleChipBtn');
+  const rolePop = document.getElementById('rolePop');
+  const roleBanner = document.getElementById('roleBanner');
+  const coupleDock = document.getElementById('coupleDock');
+
+  function applyRoleUI() {
+    roleChipBtn.classList.remove('blue', 'pink');
+    if (myRole === 'blue') {
+      roleChipBtn.textContent = '💙 Cowo';
+      roleChipBtn.classList.add('blue');
+    } else if (myRole === 'pink') {
+      roleChipBtn.textContent = '🩷 Cewe';
+      roleChipBtn.classList.add('pink');
+    } else {
+      roleChipBtn.textContent = '👀 Auto';
+    }
+
+    document.querySelectorAll('[data-set-role]').forEach(btn => {
+      if (btn.classList.contains('role-opt')) {
+        btn.classList.toggle('active', btn.dataset.setRole === myRole);
+      }
+    });
+
+    coupleDock.classList.toggle('show', myRole === 'blue' || myRole === 'pink');
+
+    if (localStorage.getItem('natla_role_picked')) {
+      roleBanner.classList.remove('show');
+    } else {
+      roleBanner.classList.add('show');
+    }
+  }
+
+  function setRole(newRole) {
+    myRole = newRole;
+    localStorage.setItem('natla_role', newRole);
+    localStorage.setItem('natla_role_picked', '1');
+    rolePop.classList.remove('open');
+    applyRoleUI();
+    updatePresenceInFirebase();
+    if (newRole !== 'auto') {
+      const m = getMascot(newRole);
+      if (m) {
+        m.jumpVel = -4.5;
+        spawnParticles(m.x, m.y - 65, '♥', 3);
+        pushMyCharState(true);
+      }
+      playTone(620, 'sine', 0.09);
+    }
+  }
+
+  roleChipBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    timePop.classList.remove('open');
+    rolePop.classList.toggle('open');
+  });
+
+  document.querySelectorAll('[data-set-role]').forEach(btn => {
+    btn.addEventListener('click', () => setRole(btn.dataset.setRole));
+  });
+
+  document.getElementById('btnKiss').addEventListener('click', () => {
+    if (myRole === 'auto') return;
+    startCoupleAction('kiss', myRole, true);
+  });
+
+  document.getElementById('btnHug').addEventListener('click', () => {
+    if (myRole === 'auto') return;
+    startCoupleAction('hug', myRole, true);
+  });
+
+  document.getElementById('btnSitDesk').addEventListener('click', () => {
+    if (myRole === 'auto') return;
+    const me = getMascot(myRole);
+    if (me) {
+      commandMascotToActivity(me, 'desk');
+      playTone(520, 'sine', 0.07);
+    }
+  });
+
+  // =========================================================================
+  // 8. MODAL PORTAL 3D (KAPSUL WAKTU, PHOTOBOOTH, GAMES)
   // =========================================================================
   const modal = document.getElementById('portalModal');
   const urlInput = document.getElementById('portalUrlInput');
@@ -1112,7 +1945,7 @@
   });
 
   // =========================================================================
-  // 8. KONTROL HUD ATAS (WAKTU, LAMPU, DECOR, AUDIO, TEMA)
+  // 9. KONTROL HUD ATAS (WAKTU, LAMPU, DECOR, AUDIO, TEMA)
   // =========================================================================
   const clockText = document.getElementById('clockText');
   const timePop = document.getElementById('timePop');
@@ -1131,6 +1964,7 @@
 
   clockText.addEventListener('click', e => {
     e.stopPropagation();
+    rolePop.classList.remove('open');
     timePop.classList.toggle('open');
   });
   timeSlider.addEventListener('input', () => {
@@ -1188,6 +2022,7 @@
   });
 
   // Start!
+  applyRoleUI();
   initFirebase();
   loadAllAssets(() => {
     updateUIButtons();
