@@ -78,12 +78,44 @@
     font-weight: 600;
     max-width: 100%;
   }
+  .brand-btn {
+    border: none;
+    background: transparent;
+    color: var(--text);
+    padding: 2px 4px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.18s, background 0.18s;
+  }
+  .brand-btn:hover { background: rgba(122, 31, 36, 0.07); }
   .brand-title {
     font-family: 'Playfair Display', serif;
     font-size: 15px;
     font-weight: 700;
     letter-spacing: -0.01em;
     white-space: nowrap;
+  }
+  .room-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(122, 31, 36, 0.09);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .room-badge.unlocked {
+    background: rgba(34, 197, 94, 0.15);
+    color: #15803D;
+  }
+  body.dark .room-badge.unlocked {
+    background: rgba(34, 197, 94, 0.22);
+    color: #86EFAC;
   }
   .dom-short { display: none; }
   .dot-live {
@@ -153,8 +185,64 @@
     display: none; flex-direction: column; gap: 6px;
   }
   .popover-card.open { display: flex; }
+  .room-pop { left: max(14px, env(safe-area-inset-left)); width: 255px; }
   .role-pop { left: max(14px, env(safe-area-inset-left)); width: 195px; }
   .time-pop { right: max(14px, env(safe-area-inset-right)); width: 225px; }
+  .room-input-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .room-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--pill-border);
+    background: rgba(122, 31, 36, 0.05);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 7px 9px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  .room-input:focus { border-color: var(--accent); }
+  .room-join-btn {
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    padding: 7px 11px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .room-sub-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px;
+  }
+  .room-mini-btn {
+    flex: 1;
+    border: 1px solid var(--pill-border);
+    background: transparent;
+    color: var(--text);
+    border-radius: 9px;
+    padding: 5px 7px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .room-mini-btn:hover { background: rgba(122, 31, 36, 0.08); }
+  .room-mini-btn.danger { color: #BE123C; border-color: rgba(225, 29, 72, 0.28); }
+  body.dark .room-mini-btn.danger { color: #FDA4AF; }
 
   .role-opt {
     border: 1px solid var(--pill-border);
@@ -382,8 +470,9 @@
     .icon-btn { width: 28px; height: 28px; font-size: 13px; }
     .clock-badge { font-size: 11px; padding: 3px 5px; }
     .popover-card { top: calc(max(10px, env(safe-area-inset-top)) + 44px); }
-    .role-pop { left: 10px; }
+    .room-pop, .role-pop { left: 10px; }
     .time-pop { right: 10px; }
+    .room-badge { font-size: 10px; padding: 2px 6px; }
     .hud-bottom {
       bottom: max(12px, env(safe-area-inset-bottom));
       padding: 5px 6px;
@@ -413,12 +502,15 @@
 <div class="hud-top">
   <div class="pill">
     <span class="dot-live"></span>
-    <span class="brand-title">
-      <span class="dom-full">natlagildr.github.io</span>
-      <span class="dom-short">natlagildr</span>
-    </span>
-    <button class="role-chip" id="roleChipBtn" title="Pilih Karakter Kontrol">👀 Auto</button>
-    <div class="presence" title="Status Online Berdua">
+    <button class="brand-btn" id="brandRoomBtn" title="Klik untuk Masukkan Kode Room">
+      <span class="brand-title">
+        <span class="dom-full">natlagildr.github.io</span>
+        <span class="dom-short">natlagildr</span>
+      </span>
+      <span class="room-badge" id="roomBadge">🔒 Lobby</span>
+    </button>
+    <button class="role-chip" id="roleChipBtn" title="Pilih Karakter Kontrol" style="display:none;">👀 Auto</button>
+    <div class="presence" id="presenceWrap" title="Lobby (Mode Auto)">
       <span class="p-dot blue on" id="dotBlue"></span>
       <span class="p-dot pink" id="dotPink"></span>
     </div>
@@ -431,6 +523,23 @@
     <button class="icon-btn" id="btnResetDecor" title="Reset Posisi Barang" style="display:none;">↺</button>
     <button class="icon-btn" id="btnAudio" title="Suara Efek">🔊</button>
     <button class="icon-btn" id="btnTheme" title="Mode Gelap/Terang">🌙</button>
+  </div>
+</div>
+
+<!-- Room Code Popover (Klik natlagildr.github.io di kiri atas) -->
+<div class="popover-card room-pop" id="roomPop">
+  <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--muted);padding:0 2px;">
+    <span id="roomStatusText">Lobby (Mode Auto)</span>
+    <span id="roomCodeDisplay" style="font-family:'JetBrains Mono',monospace;color:var(--accent);"></span>
+  </div>
+  <div class="room-input-row">
+    <input type="text" class="room-input" id="roomCodeInput" placeholder="Kode room..." maxlength="24" spellcheck="false" autocomplete="off" />
+    <button class="room-join-btn" id="btnJoinRoom">Masuk</button>
+  </div>
+  <div class="room-sub-actions">
+    <button class="room-mini-btn" id="btnGenRoom">✨ Buat Kode</button>
+    <button class="room-mini-btn" id="btnCopyRoom" style="display:none;">🔗 Salin Link</button>
+    <button class="room-mini-btn danger" id="btnLeaveRoom" style="display:none;">Keluar</button>
   </div>
 </div>
 
@@ -536,6 +645,7 @@
 
   let db = null;
   let roomRef = null;
+  let currentRoom = '';
   let serverTimeOffset = 0;
   let initialStateSeen = false;
   let lastHandledPingId = '';
@@ -543,6 +653,19 @@
   let lastHandledCoupleId = '';
   let lastCharPushAt = 0;
   const sessionId = Math.random().toString(36).slice(2, 9);
+
+  function sanitizeRoomCode(raw) {
+    return String(raw || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 24);
+  }
+
+  function getInitialRoomCode() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = sanitizeRoomCode(params.get('room'));
+      if (fromUrl.length >= 2) return fromUrl;
+    } catch (_) {}
+    return sanitizeRoomCode(localStorage.getItem('natla_room_code') || '');
+  }
 
   function getServerNow() {
     return Date.now() + serverTimeOffset;
@@ -592,7 +715,7 @@
     bantal:  { x: 318, y: 388, label: 'Bantal Hijau' }
   };
 
-  let myRole = localStorage.getItem('natla_role') || 'auto'; // 'blue' | 'pink' | 'auto'
+  let myRole = 'auto'; // Selalu 'auto' di lobby; hanya bisa pilih char setelah masuk kode room
   let remotePresence = {};
 
   let roomState = {
@@ -619,15 +742,151 @@
     });
   }
 
+  function detachCurrentRoom() {
+    if (roomRef) {
+      try {
+        roomRef.child('presence/' + sessionId).remove();
+        roomRef.child('presence').off();
+        roomRef.child('chars').off();
+        roomRef.child('state').off();
+      } catch (_) {}
+      roomRef = null;
+    }
+    remotePresence = {};
+    initialStateSeen = false;
+    lastHandledPingId = '';
+    lastHandledCatPingId = '';
+    lastHandledCoupleId = '';
+    coupleAnim = null;
+    mascots.forEach(m => {
+      m.remoteTarget = null;
+    });
+  }
+
+  function connectRoomRef(code) {
+    detachCurrentRoom();
+    if (!db || !code) return;
+
+    roomRef = db.ref('rooms/' + code);
+    updatePresenceInFirebase();
+    if (myRole !== 'auto') pushMyCharState(true);
+
+    roomRef.child('presence').on('value', snap => {
+      remotePresence = snap.val() || {};
+      const entries = Object.entries(remotePresence);
+      const count = entries.length;
+      const hasBlue = entries.some(([, v]) => v && v.role === 'blue');
+      const hasPink = entries.some(([, v]) => v && v.role === 'pink');
+
+      document.getElementById('dotBlue').classList.toggle('on', hasBlue || count >= 1);
+      document.getElementById('dotPink').classList.toggle('on', hasPink || count >= 2);
+      document.getElementById('tagBlue').textContent = hasBlue ? '●' : '';
+      document.getElementById('tagPink').textContent = hasPink ? '●' : '';
+
+      const presenceWrap = document.getElementById('presenceWrap');
+      if (presenceWrap) {
+        presenceWrap.title = count >= 2 ? `Room ${code}: Online Berdua ♥` : `Room ${code}: Terhubung (1 Online)`;
+      }
+    });
+
+    // Sinkronisasi posisi & aktivitas karakter pasangan secara real-time
+    roomRef.child('chars').on('value', snap => {
+      const chars = snap.val();
+      if (!chars) return;
+      ['blue', 'pink'].forEach(cid => {
+        const data = chars[cid];
+        if (!data || data.by === sessionId) return;
+        if (myRole === cid) return;
+        const m = getMascot(cid);
+        if (m) {
+          m.remoteTarget = {
+            x: data.x,
+            y: data.y,
+            facing: data.facing || 1,
+            activity: data.activity || 'idle',
+            inBed: !!data.inBed,
+            serverAt: data.serverAt || getServerNow(),
+            localReceivedAt: Date.now()
+          };
+        }
+      });
+    });
+
+    // Sinkronisasi state kamar (gorden, lampu, dekorasi, waktu, ping, dan animasi kiss/peluk)
+    roomRef.child('state').on('value', snap => {
+      const val = snap.val();
+      if (!val) {
+        initialStateSeen = true;
+        return;
+      }
+      if (typeof val.curtainOpen === 'boolean') roomState.curtainOpen = val.curtainOpen;
+      if (typeof val.lampOn === 'boolean') roomState.lampOn = val.lampOn;
+
+      if (typeof val.manualHour === 'number' && val.manualHour >= 0 && val.manualHour <= 23) {
+        roomState.manualHour = val.manualHour;
+      } else {
+        roomState.manualHour = null;
+      }
+      syncTimeControlsUI();
+
+      if (val.decors && !draggingKey) {
+        roomState.decors = Object.assign(JSON.parse(JSON.stringify(DEFAULT_DECORS)), val.decors);
+        localStorage.setItem('natla_decors_v2', JSON.stringify(roomState.decors));
+      }
+
+      if (!initialStateSeen) {
+        initialStateSeen = true;
+        if (val.pingEvent && val.pingEvent.id) lastHandledPingId = val.pingEvent.id;
+        if (val.catEvent && val.catEvent.id) lastHandledCatPingId = val.catEvent.id;
+        if (val.coupleAction && val.coupleAction.id) lastHandledCoupleId = val.coupleAction.id;
+        updateUIButtons();
+        return;
+      }
+
+      if (val.pingEvent && val.pingEvent.id !== lastHandledPingId && val.pingEvent.by !== sessionId) {
+        lastHandledPingId = val.pingEvent.id;
+        const targetM = getMascot(val.pingEvent.targetId || 'blue');
+        if (targetM) {
+          targetM.jumpVel = -5.5;
+          spawnParticles(targetM.x, targetM.y - 60, '♥', 4);
+        } else {
+          mascots.forEach(m => { m.jumpVel = -5.2; });
+          spawnParticles(385, 370, '♥', 5);
+        }
+        playTone(660, 'sine', 0.12, 880);
+      }
+
+      if (val.catEvent && val.catEvent.id !== lastHandledCatPingId && val.catEvent.by !== sessionId) {
+        lastHandledCatPingId = val.catEvent.id;
+        roomState.catMood = 'happy';
+        roomState.catHappyUntil = Date.now() + 3500;
+        const k = roomState.decors.karpet;
+        spawnParticles(k ? k.x + 6 : 364, (k ? k.y + 3 : 511) - 45, '♥', 4);
+        playMeow();
+      }
+
+      if (val.coupleAction && val.coupleAction.id !== lastHandledCoupleId && val.coupleAction.by !== sessionId) {
+        lastHandledCoupleId = val.coupleAction.id;
+        startCoupleAction(
+          val.coupleAction.type,
+          val.coupleAction.initiator || 'blue',
+          false,
+          val.coupleAction.meetX,
+          val.coupleAction.meetY
+        );
+      }
+
+      updateUIButtons();
+    });
+  }
+
   function initFirebase() {
     if (!FIREBASE_CONFIG.databaseURL || typeof firebase === 'undefined') return;
     try {
       const app = firebase.initializeApp(FIREBASE_CONFIG);
       try { firebase.analytics(app); } catch (_) {}
       db = firebase.database();
-      roomRef = db.ref('cozy_room_v2');
 
-      // Sinkronisasi offset waktu server Firebase (agar Indonesia & Harbin punya jam yang sama persis)
       db.ref('.info/serverTimeOffset').on('value', snap => {
         const offset = snap.val();
         if (typeof offset === 'number') {
@@ -638,128 +897,19 @@
 
       const connectedRef = db.ref('.info/connected');
       connectedRef.on('value', snap => {
-        if (snap.val() === true) {
+        if (snap.val() === true && currentRoom) {
           updatePresenceInFirebase();
           if (myRole !== 'auto') pushMyCharState(true);
         }
       });
 
-      roomRef.child('presence').on('value', snap => {
-        remotePresence = snap.val() || {};
-        const entries = Object.entries(remotePresence);
-        const count = entries.length;
-        const hasBlue = entries.some(([, v]) => v && v.role === 'blue');
-        const hasPink = entries.some(([, v]) => v && v.role === 'pink');
+      if (currentRoom) {
+        connectRoomRef(currentRoom);
+      }
 
-        document.getElementById('dotBlue').classList.toggle('on', hasBlue || count >= 1);
-        document.getElementById('dotPink').classList.toggle('on', hasPink || count >= 2);
-        document.getElementById('tagBlue').textContent = hasBlue ? '●' : '';
-        document.getElementById('tagPink').textContent = hasPink ? '●' : '';
-
-        const presenceWrap = document.querySelector('.presence');
-        if (presenceWrap) {
-          presenceWrap.title = count >= 2 ? 'Online Berdua ♥' : 'Terhubung (1 Online)';
-        }
-      });
-
-      // Sinkronisasi posisi & aktivitas karakter pasangan secara real-time (tanpa drift!)
-      roomRef.child('chars').on('value', snap => {
-        const chars = snap.val();
-        if (!chars) return;
-        ['blue', 'pink'].forEach(cid => {
-          const data = chars[cid];
-          if (!data || data.by === sessionId) return;
-          if (myRole === cid) return;
-          const m = getMascot(cid);
-          if (m) {
-            m.remoteTarget = {
-              x: data.x,
-              y: data.y,
-              facing: data.facing || 1,
-              activity: data.activity || 'idle',
-              inBed: !!data.inBed,
-              serverAt: data.serverAt || getServerNow(),
-              localReceivedAt: Date.now()
-            };
-          }
-        });
-      });
-
-      // Sinkronisasi state kamar (gorden, lampu, dekorasi, waktu, ping, dan animasi kiss/peluk)
-      roomRef.child('state').on('value', snap => {
-        const val = snap.val();
-        if (!val) {
-          initialStateSeen = true;
-          return;
-        }
-        if (typeof val.curtainOpen === 'boolean') roomState.curtainOpen = val.curtainOpen;
-        if (typeof val.lampOn === 'boolean') roomState.lampOn = val.lampOn;
-
-        // Sinkronisasi waktu custom/server
-        if (typeof val.manualHour === 'number' && val.manualHour >= 0 && val.manualHour <= 23) {
-          roomState.manualHour = val.manualHour;
-        } else {
-          roomState.manualHour = null;
-        }
-        syncTimeControlsUI();
-
-        if (val.decors && !draggingKey) {
-          roomState.decors = Object.assign(JSON.parse(JSON.stringify(DEFAULT_DECORS)), val.decors);
-          localStorage.setItem('natla_decors_v2', JSON.stringify(roomState.decors));
-        }
-
-        // Pada load pertama kali, catat ID event lama agar tidak memutar ulang event masa lalu
-        if (!initialStateSeen) {
-          initialStateSeen = true;
-          if (val.pingEvent && val.pingEvent.id) lastHandledPingId = val.pingEvent.id;
-          if (val.catEvent && val.catEvent.id) lastHandledCatPingId = val.catEvent.id;
-          if (val.coupleAction && val.coupleAction.id) lastHandledCoupleId = val.coupleAction.id;
-          updateUIButtons();
-          return;
-        }
-
-        // Event tap maskot (jump + hati di kedua device)
-        if (val.pingEvent && val.pingEvent.id !== lastHandledPingId && val.pingEvent.by !== sessionId) {
-          lastHandledPingId = val.pingEvent.id;
-          const targetM = getMascot(val.pingEvent.targetId || 'blue');
-          if (targetM) {
-            targetM.jumpVel = -5.5;
-            spawnParticles(targetM.x, targetM.y - 60, '♥', 4);
-          } else {
-            mascots.forEach(m => { m.jumpVel = -5.2; });
-            spawnParticles(385, 370, '♥', 5);
-          }
-          playTone(660, 'sine', 0.12, 880);
-        }
-
-        // Event elus kucing Mochi (animasi senang + meow di kedua device)
-        if (val.catEvent && val.catEvent.id !== lastHandledCatPingId && val.catEvent.by !== sessionId) {
-          lastHandledCatPingId = val.catEvent.id;
-          roomState.catMood = 'happy';
-          roomState.catHappyUntil = Date.now() + 3500;
-          const k = roomState.decors.karpet;
-          spawnParticles(k ? k.x + 6 : 364, (k ? k.y + 3 : 511) - 45, '♥', 4);
-          playMeow();
-        }
-
-        // Event Kiss / Peluk (diputar di KEDUA device secara bersamaan!)
-        if (val.coupleAction && val.coupleAction.id !== lastHandledCoupleId && val.coupleAction.by !== sessionId) {
-          lastHandledCoupleId = val.coupleAction.id;
-          startCoupleAction(
-            val.coupleAction.type,
-            val.coupleAction.initiator || 'blue',
-            false,
-            val.coupleAction.meetX,
-            val.coupleAction.meetY
-          );
-        }
-
-        updateUIButtons();
-      });
-
-      // Heartbeat rutin setiap 2.2 detik agar status duduk / diam di device lain tidak pernah timeout
+      // Heartbeat rutin setiap 2.2 detik saat berada di dalam room
       setInterval(() => {
-        if (myRole !== 'auto') {
+        if (currentRoom && myRole !== 'auto') {
           pushMyCharState(true);
         }
       }, 2200);
@@ -1733,6 +1883,7 @@
   canvas.addEventListener('pointerdown', e => {
     timePop.classList.remove('open');
     rolePop.classList.remove('open');
+    roomPop.classList.remove('open');
 
     const pt = screenToBase(e.clientX, e.clientY);
     const isTouch = e.pointerType === 'touch';
@@ -1925,14 +2076,64 @@
   });
 
   // =========================================================================
-  // 7. KONTROL PILIHAN KARAKTER (COWO / CEWE) & AKSI KISS / PELUK / DUDUK
+  // 7. KONTROL KODE ROOM (LOBBY vs PRIVATE) & PILIHAN KARAKTER (COWO / CEWE)
   // =========================================================================
+  const brandRoomBtn = document.getElementById('brandRoomBtn');
+  const roomBadge = document.getElementById('roomBadge');
+  const roomPop = document.getElementById('roomPop');
+  const roomStatusText = document.getElementById('roomStatusText');
+  const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+  const roomCodeInput = document.getElementById('roomCodeInput');
+  const btnCopyRoom = document.getElementById('btnCopyRoom');
+  const btnLeaveRoom = document.getElementById('btnLeaveRoom');
+
   const roleChipBtn = document.getElementById('roleChipBtn');
   const rolePop = document.getElementById('rolePop');
   const roleBanner = document.getElementById('roleBanner');
   const coupleDock = document.getElementById('coupleDock');
 
+  function syncUrlRoomParam(code) {
+    try {
+      const url = new URL(window.location.href);
+      if (code) {
+        url.searchParams.set('room', code);
+      } else {
+        url.searchParams.delete('room');
+      }
+      window.history.replaceState({}, '', url.toString());
+    } catch (_) {}
+  }
+
   function applyRoleUI() {
+    const inRoom = Boolean(currentRoom);
+
+    // Update badge & popover Kode Room di kiri atas
+    if (inRoom) {
+      roomBadge.textContent = `🔑 ${currentRoom}`;
+      roomBadge.classList.add('unlocked');
+      roomStatusText.textContent = 'Room Aktif';
+      roomCodeDisplay.textContent = `#${currentRoom}`;
+      roomCodeInput.value = currentRoom;
+      btnCopyRoom.style.display = 'inline-block';
+      btnLeaveRoom.style.display = 'inline-block';
+      roleChipBtn.style.display = 'inline-flex';
+    } else {
+      myRole = 'auto';
+      roomBadge.textContent = '🔒 Lobby';
+      roomBadge.classList.remove('unlocked');
+      roomStatusText.textContent = 'Lobby (Mode Auto)';
+      roomCodeDisplay.textContent = '';
+      roomCodeInput.value = '';
+      btnCopyRoom.style.display = 'none';
+      btnLeaveRoom.style.display = 'none';
+      roleChipBtn.style.display = 'none';
+      rolePop.classList.remove('open');
+      document.getElementById('dotBlue').classList.add('on');
+      document.getElementById('dotPink').classList.remove('on');
+      const presenceWrap = document.getElementById('presenceWrap');
+      if (presenceWrap) presenceWrap.title = 'Lobby (Masukkan Kode Room untuk Sync)';
+    }
+
     roleChipBtn.classList.remove('blue', 'pink');
     if (myRole === 'blue') {
       roleChipBtn.textContent = '💙 Cowo';
@@ -1950,19 +2151,62 @@
       }
     });
 
-    coupleDock.classList.toggle('show', myRole === 'blue' || myRole === 'pink');
+    coupleDock.classList.toggle('show', inRoom && (myRole === 'blue' || myRole === 'pink'));
 
-    if (localStorage.getItem('natla_role_picked')) {
+    // Banner cepat pilih Cowo/Cewe HANYA muncul setelah memasukkan kode room!
+    if (!inRoom || localStorage.getItem('natla_role_picked_' + currentRoom)) {
       roleBanner.classList.remove('show');
     } else {
       roleBanner.classList.add('show');
     }
   }
 
+  function enterRoom(rawCode) {
+    const clean = sanitizeRoomCode(rawCode);
+    if (clean.length < 2) {
+      showCenterToast('Kode room minimal 2 huruf/angka', 1800);
+      roomCodeInput.focus();
+      return;
+    }
+    currentRoom = clean;
+    localStorage.setItem('natla_room_code', clean);
+    syncUrlRoomParam(clean);
+
+    // Pulihkan pilihan karakter khusus room ini (jika pernah pilih), default 'auto'
+    const savedRole = localStorage.getItem('natla_role_' + clean);
+    myRole = (savedRole === 'blue' || savedRole === 'pink') ? savedRole : 'auto';
+
+    roomPop.classList.remove('open');
+    applyRoleUI();
+    connectRoomRef(clean);
+    playTone(640, 'sine', 0.1, 880);
+    showCenterToast(`Masuk Room #${clean} 🔑`, 1800);
+  }
+
+  function leaveToLobby() {
+    detachCurrentRoom();
+    currentRoom = '';
+    myRole = 'auto';
+    localStorage.removeItem('natla_room_code');
+    syncUrlRoomParam('');
+    roomPop.classList.remove('open');
+    applyRoleUI();
+    playTone(420, 'sine', 0.1, 300);
+    showCenterToast('Kembali ke Lobby (Mode Auto)', 1600);
+  }
+
   function setRole(newRole) {
+    if (!currentRoom) {
+      myRole = 'auto';
+      applyRoleUI();
+      roomPop.classList.add('open');
+      roomCodeInput.focus();
+      showCenterToast('Masukkan kode room dulu untuk pilih karakter 🔒', 2000);
+      return;
+    }
     myRole = newRole;
-    localStorage.setItem('natla_role', newRole);
-    localStorage.setItem('natla_role_picked', '1');
+    localStorage.setItem('natla_role_' + currentRoom, newRole);
+    localStorage.setItem('natla_role_picked_' + currentRoom, '1');
     rolePop.classList.remove('open');
     applyRoleUI();
     updatePresenceInFirebase();
@@ -1977,9 +2221,57 @@
     }
   }
 
-  roleChipBtn.addEventListener('click', e => {
+  brandRoomBtn.addEventListener('click', e => {
     e.stopPropagation();
     timePop.classList.remove('open');
+    rolePop.classList.remove('open');
+    roomPop.classList.toggle('open');
+    if (roomPop.classList.contains('open')) {
+      setTimeout(() => roomCodeInput.focus(), 40);
+    }
+  });
+
+  document.getElementById('btnJoinRoom').addEventListener('click', () => {
+    enterRoom(roomCodeInput.value);
+  });
+
+  roomCodeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      enterRoom(roomCodeInput.value);
+    }
+  });
+
+  document.getElementById('btnGenRoom').addEventListener('click', () => {
+    const words = ['love', 'cozy', 'kita', 'home', 'moon', 'star'];
+    const w = words[Math.floor(Math.random() * words.length)];
+    const num = Math.floor(10 + Math.random() * 89);
+    const code = `${w}${num}`;
+    roomCodeInput.value = code;
+    enterRoom(code);
+  });
+
+  btnCopyRoom.addEventListener('click', async () => {
+    if (!currentRoom) return;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoom)}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showCenterToast(`Link Room #${currentRoom} disalin! 📋`, 2000);
+    } catch (_) {
+      showCenterToast(`Kode Room: ${currentRoom}`, 2200);
+    }
+    roomPop.classList.remove('open');
+  });
+
+  btnLeaveRoom.addEventListener('click', leaveToLobby);
+
+  roleChipBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!currentRoom) {
+      roomPop.classList.add('open');
+      return;
+    }
+    timePop.classList.remove('open');
+    roomPop.classList.remove('open');
     rolePop.classList.toggle('open');
   });
 
@@ -2091,6 +2383,7 @@
   clockText.addEventListener('click', e => {
     e.stopPropagation();
     rolePop.classList.remove('open');
+    roomPop.classList.remove('open');
     timePop.classList.toggle('open');
   });
   timeSlider.addEventListener('input', () => {
@@ -2154,6 +2447,14 @@
   });
 
   // Start!
+  currentRoom = getInitialRoomCode();
+  if (currentRoom) {
+    const savedRole = localStorage.getItem('natla_role_' + currentRoom);
+    myRole = (savedRole === 'blue' || savedRole === 'pink') ? savedRole : 'auto';
+    syncUrlRoomParam(currentRoom);
+  } else {
+    myRole = 'auto';
+  }
   applyRoleUI();
   initFirebase();
   loadAllAssets(() => {
