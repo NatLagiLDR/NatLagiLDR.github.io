@@ -154,7 +154,7 @@
   }
   .popover-card.open { display: flex; }
   .role-pop { left: max(14px, env(safe-area-inset-left)); width: 195px; }
-  .time-pop { right: max(14px, env(safe-area-inset-right)); width: 215px; }
+  .time-pop { right: max(14px, env(safe-area-inset-right)); width: 225px; }
 
   .role-opt {
     border: 1px solid var(--pill-border);
@@ -243,7 +243,7 @@
   .rb-btn.blue { background: rgba(96, 165, 250, 0.22); border-color: rgba(96, 165, 250, 0.5); }
   .rb-btn.pink { background: rgba(244, 114, 182, 0.22); border-color: rgba(244, 114, 182, 0.5); }
 
-  /* Couple Action Bar (Kiss, Peluk, Duduk) */
+  /* Couple Action Bar (Kiss, Peluk, Duduk Meja, Beanbag) */
   .couple-dock {
     position: fixed;
     bottom: calc(max(16px, env(safe-area-inset-bottom)) + 52px);
@@ -252,7 +252,8 @@
     z-index: 20;
     display: none;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
+    max-width: calc(100vw - 20px);
     background: var(--pill-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -266,15 +267,15 @@
     border: none;
     background: transparent;
     color: var(--text);
-    padding: 6px 12px;
+    padding: 6px 10px;
     border-radius: 999px;
     font-family: inherit;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     white-space: nowrap;
     transition: 0.18s;
   }
@@ -392,7 +393,7 @@
       bottom: calc(max(12px, env(safe-area-inset-bottom)) + 48px);
     }
     .dock-btn { padding: 7px 11px; font-size: 12px; gap: 5px; }
-    .act-btn { padding: 6px 10px; font-size: 11.5px; }
+    .act-btn { padding: 6px 8px; font-size: 11px; gap: 3px; }
     .modal-card { width: 96vw; height: 88dvh; border-radius: 18px; }
     .modal-bar { padding: 8px 10px; gap: 6px; }
     .m-btn { padding: 6px 10px; font-size: 11.5px; }
@@ -424,7 +425,7 @@
   </div>
 
   <div class="pill icon-group">
-    <span class="clock-badge" id="clockText" title="Ubah Simulasi Waktu">14:00</span>
+    <span class="clock-badge" id="clockText" title="Waktu Server (Klik untuk Ubah & Sync)">14:00</span>
     <button class="icon-btn" id="btnLamp" title="Lampu Kamar">💡</button>
     <button class="icon-btn" id="btnDecor" title="Geser Barang (Decor Mode)">🪑</button>
     <button class="icon-btn" id="btnResetDecor" title="Reset Posisi Barang" style="display:none;">↺</button>
@@ -441,16 +442,16 @@
   <button class="role-opt active" data-set-role="auto"><span>👀 Mode Auto</span><span></span></button>
 </div>
 
-<!-- Time Picker Popover -->
+<!-- Time Picker Popover (Tersinkronisasi Berdua via Server) -->
 <div class="popover-card time-pop" id="timePop">
   <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:600;">
-    <span>Simulasi Waktu</span>
-    <button class="t-btn" id="btnAutoTime" style="padding:3px 9px;">Auto</button>
+    <span id="timeModeLabel">Waktu Server (Sync)</span>
+    <button class="t-btn" id="btnAutoTime" style="padding:3px 9px;">Server</button>
   </div>
   <input type="range" id="timeSlider" min="0" max="23" value="14" style="accent-color:var(--accent);width:100%;height:24px;">
   <div class="time-presets">
     <button class="t-btn" data-hr="8">Pagi</button>
-    <button class="t-btn active" data-hr="14">Siang</button>
+    <button class="t-btn" data-hr="14">Siang</button>
     <button class="t-btn" data-hr="18">Sore</button>
     <button class="t-btn" data-hr="23">Tidur</button>
   </div>
@@ -474,7 +475,9 @@
   <div class="divider"></div>
   <button class="act-btn love" id="btnHug">🤗 Peluk</button>
   <div class="divider"></div>
-  <button class="act-btn" id="btnSitDesk">🪑 Duduk</button>
+  <button class="act-btn" id="btnSitDesk">🪑 Meja</button>
+  <div class="divider"></div>
+  <button class="act-btn" id="btnSitBeanbag">🛋️ Beanbag</button>
 </div>
 
 <div class="hud-bottom">
@@ -533,11 +536,17 @@
 
   let db = null;
   let roomRef = null;
-  let lastHandledPingAt = 0;
-  let lastHandledCatPingAt = 0;
-  let lastHandledCoupleAt = 0;
+  let serverTimeOffset = 0;
+  let initialStateSeen = false;
+  let lastHandledPingId = '';
+  let lastHandledCatPingId = '';
+  let lastHandledCoupleId = '';
   let lastCharPushAt = 0;
   const sessionId = Math.random().toString(36).slice(2, 9);
+
+  function getServerNow() {
+    return Date.now() + serverTimeOffset;
+  }
 
   // =========================================================================
   // 2. MUAT ASET PNG TERPISAH DARI FOLDER ./assets/
@@ -589,10 +598,16 @@
   let roomState = {
     curtainOpen: true,
     lampOn: false,
+    manualHour: null, // null = waktu server bersama; 0..23 = waktu custom tersinkronisasi
     catMood: 'sleep',
     catHappyUntil: 0,
     decors: JSON.parse(localStorage.getItem('natla_decors_v2') || 'null') || JSON.parse(JSON.stringify(DEFAULT_DECORS))
   };
+
+  function isRoleClaimedRemotely(roleId) {
+    if (roleId === 'auto' || myRole === roleId) return false;
+    return Object.entries(remotePresence).some(([sid, v]) => sid !== sessionId && v && v.role === roleId);
+  }
 
   function updatePresenceInFirebase() {
     if (!roomRef || !db) return;
@@ -612,10 +627,20 @@
       db = firebase.database();
       roomRef = db.ref('cozy_room_v2');
 
+      // Sinkronisasi offset waktu server Firebase (agar Indonesia & Harbin punya jam yang sama persis)
+      db.ref('.info/serverTimeOffset').on('value', snap => {
+        const offset = snap.val();
+        if (typeof offset === 'number') {
+          serverTimeOffset = offset;
+          updateClockDisplay();
+        }
+      });
+
       const connectedRef = db.ref('.info/connected');
       connectedRef.on('value', snap => {
         if (snap.val() === true) {
           updatePresenceInFirebase();
+          if (myRole !== 'auto') pushMyCharState(true);
         }
       });
 
@@ -637,16 +662,14 @@
         }
       });
 
-      // Sinkronisasi posisi karakter pasangan secara real-time
+      // Sinkronisasi posisi & aktivitas karakter pasangan secara real-time (tanpa drift!)
       roomRef.child('chars').on('value', snap => {
         const chars = snap.val();
         if (!chars) return;
         ['blue', 'pink'].forEach(cid => {
           const data = chars[cid];
           if (!data || data.by === sessionId) return;
-          if (Date.now() - (data.updatedAt || 0) > 12000) return;
-          // Jangan timpa saat sedang animasi kiss/peluk bersama
-          if (coupleAnim && coupleAnim.phase === 'acting') return;
+          if (myRole === cid) return;
           const m = getMascot(cid);
           if (m) {
             m.remoteTarget = {
@@ -655,74 +678,114 @@
               facing: data.facing || 1,
               activity: data.activity || 'idle',
               inBed: !!data.inBed,
-              updatedAt: Date.now()
+              serverAt: data.serverAt || getServerNow(),
+              localReceivedAt: Date.now()
             };
           }
         });
       });
 
+      // Sinkronisasi state kamar (gorden, lampu, dekorasi, waktu, ping, dan animasi kiss/peluk)
       roomRef.child('state').on('value', snap => {
         const val = snap.val();
-        if (!val) return;
+        if (!val) {
+          initialStateSeen = true;
+          return;
+        }
         if (typeof val.curtainOpen === 'boolean') roomState.curtainOpen = val.curtainOpen;
         if (typeof val.lampOn === 'boolean') roomState.lampOn = val.lampOn;
+
+        // Sinkronisasi waktu custom/server
+        if (typeof val.manualHour === 'number' && val.manualHour >= 0 && val.manualHour <= 23) {
+          roomState.manualHour = val.manualHour;
+        } else {
+          roomState.manualHour = null;
+        }
+        syncTimeControlsUI();
+
         if (val.decors && !draggingKey) {
           roomState.decors = Object.assign(JSON.parse(JSON.stringify(DEFAULT_DECORS)), val.decors);
           localStorage.setItem('natla_decors_v2', JSON.stringify(roomState.decors));
         }
-        if (val.pingAt && val.pingAt !== lastHandledPingAt && val.pingBy !== sessionId && Date.now() - val.pingAt < 5000) {
-          lastHandledPingAt = val.pingAt;
-          mascots.forEach(m => { m.jumpVel = -5.2; });
-          spawnParticles(355, 360, '♥', 4);
-          spawnParticles(410, 385, '♥', 4);
+
+        // Pada load pertama kali, catat ID event lama agar tidak memutar ulang event masa lalu
+        if (!initialStateSeen) {
+          initialStateSeen = true;
+          if (val.pingEvent && val.pingEvent.id) lastHandledPingId = val.pingEvent.id;
+          if (val.catEvent && val.catEvent.id) lastHandledCatPingId = val.catEvent.id;
+          if (val.coupleAction && val.coupleAction.id) lastHandledCoupleId = val.coupleAction.id;
+          updateUIButtons();
+          return;
+        }
+
+        // Event tap maskot (jump + hati di kedua device)
+        if (val.pingEvent && val.pingEvent.id !== lastHandledPingId && val.pingEvent.by !== sessionId) {
+          lastHandledPingId = val.pingEvent.id;
+          const targetM = getMascot(val.pingEvent.targetId || 'blue');
+          if (targetM) {
+            targetM.jumpVel = -5.5;
+            spawnParticles(targetM.x, targetM.y - 60, '♥', 4);
+          } else {
+            mascots.forEach(m => { m.jumpVel = -5.2; });
+            spawnParticles(385, 370, '♥', 5);
+          }
           playTone(660, 'sine', 0.12, 880);
         }
-        if (val.catPingAt && val.catPingAt !== lastHandledCatPingAt && val.catPingBy !== sessionId && Date.now() - val.catPingAt < 5000) {
-          lastHandledCatPingAt = val.catPingAt;
+
+        // Event elus kucing Mochi (animasi senang + meow di kedua device)
+        if (val.catEvent && val.catEvent.id !== lastHandledCatPingId && val.catEvent.by !== sessionId) {
+          lastHandledCatPingId = val.catEvent.id;
           roomState.catMood = 'happy';
           roomState.catHappyUntil = Date.now() + 3500;
           const k = roomState.decors.karpet;
           spawnParticles(k ? k.x + 6 : 364, (k ? k.y + 3 : 511) - 45, '♥', 4);
           playMeow();
         }
-        if (val.coupleAction && val.coupleAction.at !== lastHandledCoupleAt && val.coupleAction.by !== sessionId && Date.now() - val.coupleAction.at < 6000) {
-          lastHandledCoupleAt = val.coupleAction.at;
-          startCoupleAction(val.coupleAction.type, val.coupleAction.initiator || 'blue', false);
+
+        // Event Kiss / Peluk (diputar di KEDUA device secara bersamaan!)
+        if (val.coupleAction && val.coupleAction.id !== lastHandledCoupleId && val.coupleAction.by !== sessionId) {
+          lastHandledCoupleId = val.coupleAction.id;
+          startCoupleAction(
+            val.coupleAction.type,
+            val.coupleAction.initiator || 'blue',
+            false,
+            val.coupleAction.meetX,
+            val.coupleAction.meetY
+          );
         }
+
         updateUIButtons();
       });
+
+      // Heartbeat rutin setiap 2.2 detik agar status duduk / diam di device lain tidak pernah timeout
+      setInterval(() => {
+        if (myRole !== 'auto') {
+          pushMyCharState(true);
+        }
+      }, 2200);
     } catch (e) {
       console.warn('Firebase fallback ke mode lokal:', e);
     }
   }
 
-  function pushState(ping = false, catPing = false, couplePayload = null) {
+  function pushState(extra = {}) {
     localStorage.setItem('natla_decors_v2', JSON.stringify(roomState.decors));
     if (roomRef) {
-      const payload = {
+      const payload = Object.assign({
         curtainOpen: roomState.curtainOpen,
         lampOn: roomState.lampOn,
+        manualHour: roomState.manualHour === null ? -1 : roomState.manualHour,
         decors: roomState.decors
-      };
-      if (ping) {
-        payload.pingAt = Date.now();
-        payload.pingBy = sessionId;
-      }
-      if (catPing) {
-        payload.catPingAt = Date.now();
-        payload.catPingBy = sessionId;
-      }
-      if (couplePayload) {
-        payload.coupleAction = couplePayload;
-      }
+      }, extra);
       roomRef.child('state').update(payload);
     }
   }
 
   function pushMyCharState(force = false) {
     if (!roomRef || myRole === 'auto') return;
+    if (coupleAnim) return; // Saat animasi couple, koordinat diatur oleh coupleAction
     const now = Date.now();
-    if (!force && now - lastCharPushAt < 380) return;
+    if (!force && now - lastCharPushAt < 260) return;
     lastCharPushAt = now;
     const m = getMascot(myRole);
     if (!m) return;
@@ -733,7 +796,7 @@
       facing: m.facing,
       activity: m.activity,
       inBed: m.inBed,
-      updatedAt: now
+      serverAt: firebase.database.ServerValue.TIMESTAMP
     });
   }
 
@@ -792,7 +855,6 @@
   roomBuffer.height = BASE_H;
   const rctx = roomBuffer.getContext('2d');
 
-  let manualHour = null;
   let decorMode = false;
   let draggingKey = null;
   let dragOffset = { x: 0, y: 0 };
@@ -856,7 +918,8 @@
       case 'desk':
         return { node: 1, x: 495, y: 396, facing: 1, icon: '💻', duration: 240 };
       case 'beanbag':
-        return { node: 0, x: bb.x, y: bb.y - 6, facing: 1, icon: '♪', duration: 220 };
+        // y = bb.y + 4 agar karakter dirender di depan bantal beanbag (tidak tenggelam di belakangnya)
+        return { node: 0, x: bb.x + 2, y: bb.y + 4, facing: 1, icon: '♪', duration: 220 };
       case 'board':
         return { node: 0, x: 364, y: 328, facing: 1, icon: '💌', duration: 160 };
       case 'cat':
@@ -900,8 +963,21 @@
     return mascots.find(m => m.id === id);
   }
 
+  // Mengambil jam aktif: jika manualHour di-set maka pakai manualHour (tersinkronisasi),
+  // jika null maka pakai waktu server bersama (UTC+8 / Harbin-WITA, selisih 1 jam dari WIB)
+  function getServerClockParts() {
+    const serverMs = getServerNow();
+    // Gunakan UTC+8 sebagai standar server bersama (tengah-tengah/Harbin CST)
+    const d = new Date(serverMs + 8 * 3600 * 1000);
+    return {
+      hour: d.getUTCHours(),
+      minute: d.getUTCMinutes()
+    };
+  }
+
   function getActiveHour() {
-    return manualHour !== null ? manualHour : new Date().getHours();
+    if (roomState.manualHour !== null) return roomState.manualHour;
+    return getServerClockParts().hour;
   }
 
   function isSleepTime() {
@@ -921,12 +997,10 @@
     }
   }
 
-  // Mengirim karakter ke aktivitas tertentu atau titik lantai tertentu
   function commandMascotToActivity(m, actName) {
     const spot = getActivitySpot(actName, m.id);
     if (!spot) return;
 
-    // Jika sedang di kasur, keluar dulu lewat node samping kasur
     if (m.inBed) {
       const exitNode = m.id === 'blue' ? 2 : 5;
       m.x = WALK_NODES[exitNode].x;
@@ -942,6 +1016,7 @@
     m.currentNode = startNode;
     m.pathQueue = findNodePath(startNode, spot.node).slice(1);
     m.finalDest = { x: spot.x, y: spot.y, facing: spot.facing };
+    if (myRole === m.id) pushMyCharState(true);
   }
 
   function commandMascotToFloor(m, targetX, targetY, destFacing = null) {
@@ -960,55 +1035,54 @@
     m.currentNode = startNode;
     m.pathQueue = findNodePath(startNode, endNode).slice(1);
     m.finalDest = { x: targetX, y: targetY, facing: destFacing };
+    if (myRole === m.id) pushMyCharState(true);
   }
 
-  // Memulai interaksi couple: Kiss atau Peluk
-  function startCoupleAction(type, initiatorId, broadcast = true) {
+  // Memulai interaksi couple: Kiss atau Peluk (sinkron di kedua device!)
+  function startCoupleAction(type, initiatorId, broadcast = true, forcedMeetX = null, forcedMeetY = null) {
     const actor = getMascot(initiatorId) || mascots[0];
     const partner = getMascot(initiatorId === 'blue' ? 'pink' : 'blue');
     if (!actor || !partner) return;
 
-    // Tentukan titik pertemuan di lantai terbuka (jika partner di kasur/kursi, ketemu di tengah lantai)
-    let meetX = partner.x;
-    let meetY = partner.y;
-    if (partner.inBed || partner.activity === 'desk' || partner.activity === 'beanbag') {
+    let meetX = forcedMeetX !== null ? forcedMeetX : partner.x;
+    let meetY = forcedMeetY !== null ? forcedMeetY : partner.y;
+
+    // Jika titik pertemuan berada di luar lantai terbuka (misal partner di kasur/kursi/beanbag), ketemu di tengah lantai
+    if (forcedMeetX === null && (partner.inBed || partner.activity === 'desk' || partner.activity === 'beanbag' || !isWalkableFloor(meetX, meetY))) {
       meetX = 416;
       meetY = 446;
-      commandMascotToFloor(partner, meetX + 16, meetY, -1);
-    } else {
-      partner.pathQueue = [];
-      partner.finalDest = null;
-      partner.pendingActivity = null;
-      partner.activity = 'waiting_love';
     }
 
-    const gap = type === 'hug' ? 17 : 25;
-    // Pastikan yang di kiri menghadap kanan (1) dan yang di kanan menghadap kiri (-1)
+    const gap = type === 'hug' ? 17 : 24;
     const actorGoesLeft = actor.x <= meetX;
     const actorTargetX = actorGoesLeft ? meetX - gap : meetX + gap;
     const partnerTargetX = actorGoesLeft ? meetX + 4 : meetX - 4;
 
-    if (partner.activity === 'waiting_love') {
-      partner.x = partnerTargetX;
-      partner.facing = actorGoesLeft ? -1 : 1;
-    }
-
+    commandMascotToFloor(partner, partnerTargetX, meetY, actorGoesLeft ? -1 : 1);
     commandMascotToFloor(actor, actorTargetX, meetY, actorGoesLeft ? 1 : -1);
 
+    const actionId = sessionId + '_' + Date.now();
+    if (broadcast) lastHandledCoupleId = actionId;
+
     coupleAnim = {
+      id: actionId,
       type,
       initiator: initiatorId,
       phase: 'moving',
-      actorLeft: actorGoesLeft,
       until: Date.now() + 9000
     };
 
     if (broadcast) {
-      pushState(false, false, {
-        type,
-        initiator: initiatorId,
-        by: sessionId,
-        at: Date.now()
+      pushState({
+        coupleAction: {
+          id: actionId,
+          type,
+          initiator: initiatorId,
+          meetX: Math.round(meetX),
+          meetY: Math.round(meetY),
+          by: sessionId,
+          serverAt: firebase.database.ServerValue.TIMESTAMP
+        }
       });
     }
   }
@@ -1048,7 +1122,7 @@
       roomState.catMood = sleeping ? 'sleep' : (Math.sin(Date.now() / 6000) > 0.2 ? 'sit' : 'sleep');
     }
 
-    // Update animasi couple (Kiss / Peluk)
+    // Update animasi couple (Kiss / Peluk) pada KEDUA device
     if (coupleAnim) {
       const actor = getMascot(coupleAnim.initiator);
       const partner = getMascot(coupleAnim.initiator === 'blue' ? 'pink' : 'blue');
@@ -1063,7 +1137,6 @@
           actor.activity = coupleAnim.type;
           partner.activity = coupleAnim.type;
 
-          // Hadapkan keduanya saling berhadapan!
           if (actor.x <= partner.x) {
             actor.facing = 1;
             partner.facing = -1;
@@ -1084,7 +1157,7 @@
           const label = coupleAnim.type === 'kiss'
             ? 'Mochi Biru & Pink ciuman~ 💋'
             : 'Berpelukan hangat~ 🤗';
-          showCenterToast(label, 2400);
+          showCenterToast(label, 2500);
         } else if (Date.now() > coupleAnim.until) {
           coupleAnim = null;
         }
@@ -1096,8 +1169,8 @@
         if (Date.now() > coupleAnim.until) {
           actor.activity = 'idle';
           partner.activity = 'idle';
-          actor.waitTimer = 45;
-          partner.waitTimer = 55;
+          actor.waitTimer = 50;
+          partner.waitTimer = 60;
           coupleAnim = null;
           if (myRole !== 'auto') pushMyCharState(true);
         }
@@ -1115,18 +1188,30 @@
         }
       }
 
-      const isControlledByMe = (myRole === m.id);
-      const hasFreshRemote = !isControlledByMe && m.remoteTarget && (Date.now() - m.remoteTarget.updatedAt < 8000);
+      // Sedang dalam animasi couple (moving / acting) -> dikendalikan oleh coupleAnim
+      if (coupleAnim) {
+        if (coupleAnim.phase === 'moving') {
+          stepMascotMovement(m);
+        } else {
+          m.frame = 0;
+        }
+        return;
+      }
 
-      // Jika dikontrol pasangan dari perangkat jauh (Firebase)
-      if (hasFreshRemote && (!coupleAnim || coupleAnim.phase !== 'acting')) {
+      const isControlledByMe = (myRole === m.id);
+      const claimedRemotely = isRoleClaimedRemotely(m.id);
+      const hasFreshRemote = !isControlledByMe && m.remoteTarget &&
+        (claimedRemotely || (Date.now() - m.remoteTarget.localReceivedAt < 25000));
+
+      // Jika dikontrol pasangan dari perangkat jauh (Firebase): ikuti 100% tanpa pernah jatuh ke AI acak!
+      if (hasFreshRemote) {
         const rt = m.remoteTarget;
         const dx = rt.x - m.x;
         const dy = rt.y - m.y;
         const dist = Math.hypot(dx, dy);
         if (dist > 2) {
-          m.x += dx * 0.14;
-          m.y += dy * 0.14;
+          m.x += dx * 0.16;
+          m.y += dy * 0.16;
           if (Math.abs(dx) > 0.25) m.facing = dx < 0 ? -1 : 1;
           m.stepTimer++;
           if (m.stepTimer % 10 === 0) m.frame = m.frame === 1 ? 2 : 1;
@@ -1138,17 +1223,13 @@
         }
         m.activity = rt.activity;
         m.inBed = rt.inBed;
+        m.pathQueue = [];
+        m.finalDest = null;
         return;
       }
 
-      // Sedang dalam animasi couple (kiss / peluk)
-      if (coupleAnim && coupleAnim.phase === 'acting') {
-        m.frame = 0;
-        return;
-      }
-
-      // Tidur malam otomatis (jika tidak sedang dikontrol jalan manual)
-      if (sleeping && !isControlledByMe && !coupleAnim) {
+      // Tidur malam otomatis (hanya untuk karakter yang tidak sedang dikontrol user)
+      if (sleeping && !isControlledByMe) {
         if (!m.inBed) {
           const bedsideNode = m.id === 'blue' ? 2 : 5;
           if (m.currentNode !== bedsideNode && m.pathQueue.length === 0) {
@@ -1168,7 +1249,7 @@
       }
 
       // Bangun pagi otomatis
-      if (!sleeping && m.inBed && m.activity !== 'bed') {
+      if (!sleeping && m.inBed && m.activity !== 'bed' && !isControlledByMe) {
         const exitNode = m.id === 'blue' ? 2 : 5;
         const exitPt = WALK_NODES[exitNode];
         m.x = exitPt.x;
@@ -1186,11 +1267,17 @@
         return;
       }
 
-      // Sedang menjalankan aktivitas duduk/santai/tidur siang
+      // Jika dikontrol oleh saya: tetap diam di posisi / pose duduk sekarang sampai saya klik tempat lain
+      if (isControlledByMe) {
+        m.frame = 0;
+        return;
+      }
+
+      // Sedang menjalankan aktivitas otonom (duduk/santai)
       if (m.activityTimer > 0) {
         m.activityTimer--;
         m.frame = 0;
-        if (m.activityTimer === 0 && !isControlledByMe) {
+        if (m.activityTimer === 0) {
           if (m.inBed) {
             const exitNode = m.id === 'blue' ? 2 : 5;
             m.x = WALK_NODES[exitNode].x;
@@ -1204,29 +1291,25 @@
         return;
       }
 
-      // AI otonom (hanya untuk karakter yang tidak sedang dipilih user)
-      if (!isControlledByMe && m.activity !== 'waiting_love') {
-        if (m.waitTimer > 0) {
-          m.waitTimer--;
-          m.frame = 0;
-          if (m.waitTimer === 0) {
-            // Pilih aktivitas seru (kursi meja, beanbag, papan surat, kucing, kamera) atau jalan santai
-            const roll = Math.random();
-            if (roll < 0.65) {
-              const acts = ['desk', 'beanbag', 'board', 'cat', 'camera'];
-              // Hindari kursi meja dipakai berdua bersamaan
-              const other = getMascot(m.id === 'blue' ? 'pink' : 'blue');
-              const filtered = acts.filter(a => !(other && other.activity === a && (a === 'desk' || a === 'beanbag')));
-              const chosen = filtered[Math.floor(Math.random() * filtered.length)];
-              commandMascotToActivity(m, chosen);
-            } else {
-              let targetNode = Math.floor(Math.random() * WALK_NODES.length);
-              if (targetNode === m.currentNode) {
-                targetNode = (m.currentNode + 2) % WALK_NODES.length;
-              }
-              m.pathQueue = findNodePath(m.currentNode, targetNode).slice(1);
-              m.activity = 'walking';
+      // AI otonom (hanya berjalan jika karakter TIDAK dikontrol lokal maupun remote)
+      if (m.waitTimer > 0) {
+        m.waitTimer--;
+        m.frame = 0;
+        if (m.waitTimer === 0) {
+          const roll = Math.random();
+          if (roll < 0.65) {
+            const acts = ['desk', 'beanbag', 'board', 'cat', 'camera'];
+            const other = getMascot(m.id === 'blue' ? 'pink' : 'blue');
+            const filtered = acts.filter(a => !(other && other.activity === a && (a === 'desk' || a === 'beanbag')));
+            const chosen = filtered[Math.floor(Math.random() * filtered.length)];
+            commandMascotToActivity(m, chosen);
+          } else {
+            let targetNode = Math.floor(Math.random() * WALK_NODES.length);
+            if (targetNode === m.currentNode) {
+              targetNode = (m.currentNode + 2) % WALK_NODES.length;
             }
+            m.pathQueue = findNodePath(m.currentNode, targetNode).slice(1);
+            m.activity = 'walking';
           }
         }
       }
@@ -1259,7 +1342,6 @@
     const dy = target.y - m.y;
     const dist = Math.hypot(dx, dy);
 
-    // Update arah hadap (facing: -1 kiri, 1 kanan) agar TIDAK PERNAH jalan mundur!
     if (Math.abs(dx) > 0.15) {
       m.facing = dx < 0 ? -1 : 1;
     }
@@ -1280,7 +1362,7 @@
         m.frame = 0;
         if (m.pendingActivity) {
           m.activity = m.pendingActivity.name;
-          m.activityTimer = m.pendingActivity.spot.duration;
+          m.activityTimer = (myRole === m.id) ? 0 : m.pendingActivity.spot.duration;
           if (m.activity === 'bed') m.inBed = true;
           m.pendingActivity = null;
         } else if (m.activity === 'walking') {
@@ -1434,7 +1516,7 @@
       });
     }
 
-    // Cek apakah sedang dalam animasi spesial couple (Kiss / Peluk) dengan sprite gabungan
+    // Cek apakah sedang dalam animasi spesial couple (Kiss / Peluk)
     const isActingCouple = coupleAnim && coupleAnim.phase === 'acting';
     let coupleSpriteKey = null;
     if (isActingCouple) {
@@ -1486,8 +1568,8 @@
           drawList.push({
             y: m.y,
             draw: () => {
-              // Bayangan bawah kaki
-              if (!isSleepingPose) {
+              // Bayangan bawah kaki (hanya saat berdiri/jalan di lantai)
+              if (!isSleepingPose && !isSittingPose) {
                 rctx.save();
                 rctx.fillStyle = 'rgba(42, 33, 30, 0.18)';
                 rctx.beginPath();
@@ -1496,20 +1578,21 @@
                 rctx.restore();
               }
 
-              let swayX = 0;
+              // Offset vertikal agar pas duduk di atas bantal beanbag / stool meja
+              const seatLift = m.activity === 'beanbag' ? -14 : (m.activity === 'desk' ? -5 : 0);
               let bobY = (!isSleepingPose && !isSittingPose && m.frame > 0) ? -3 : 0;
-              if (m.activity === 'hug') {
-                swayX = Math.sin(Date.now() / 240) * 2.2;
-              } else if (m.activity === 'desk') {
+              if (m.activity === 'desk') {
                 bobY = Math.sin(Date.now() / 160) * 1.1;
+              } else if (m.activity === 'beanbag') {
+                bobY = Math.sin(Date.now() / 340) * 1.0;
               }
 
               const flipX = !isSleepingPose && (m.facing === -1);
               drawCenteredSprite(
                 rctx,
                 spr,
-                m.x + swayX,
-                m.y + m.jumpY + bobY,
+                m.x,
+                m.y + seatLift + m.jumpY + bobY,
                 isSleepingPose ? 0.74 : 0.78,
                 flipX
               );
@@ -1520,7 +1603,7 @@
                 rctx.save();
                 rctx.fillStyle = m.id === 'blue' ? '#3B82F6' : '#EC4899';
                 rctx.beginPath();
-                const ay = m.y - (isSittingPose ? 76 : 92) + m.jumpY + arrowBob;
+                const ay = m.y + seatLift - (isSittingPose ? 74 : 92) + m.jumpY + arrowBob;
                 rctx.moveTo(m.x, ay + 6);
                 rctx.lineTo(m.x - 5, ay);
                 rctx.lineTo(m.x + 5, ay);
@@ -1535,7 +1618,7 @@
                 const floatY = Math.sin(Date.now() / 360) * 2;
                 rctx.save();
                 rctx.font = '13px sans-serif';
-                rctx.fillText(actIcons[m.activity], m.x + 14, m.y - (isSittingPose ? 56 : 68) + floatY);
+                rctx.fillText(actIcons[m.activity], m.x + 14, m.y + seatLift - (isSittingPose ? 54 : 68) + floatY);
                 rctx.restore();
               }
             }
@@ -1634,21 +1717,15 @@
     }
   }
 
-  function showCenterToast(text, duration = 2000) {
+  function showCenterToast(text, duration = 2200) {
     showTooltipAt(text, window.innerWidth / 2, Math.max(115, window.innerHeight * 0.22), duration);
   }
 
-  // Cek apakah titik di dalam poligon lantai berjalan yang aman (di luar kasur/meja/lemari/tripod)
   function isWalkableFloor(px, py) {
-    // Area diamond lantai terbuka
     if (px < 165 || px > 475 || py < 315 || py > 610) return false;
-    // Hindari kotak kasur (x < 372 && y < 465)
     if (px < 372 && py < 468) return false;
-    // Hindari segitiga kiri kasur
     if (px < 260 && py < 535) return false;
-    // Hindari area meja & lemari kanan
     if (px > 445 && py < 430) return false;
-    // Hindari tripod kamera
     if (px > 460 && py > 440) return false;
     return true;
   }
@@ -1679,16 +1756,22 @@
       }
     }
 
-    // 1. Cek klik Maskot Biru / Pink
+    // 1. Cek klik Maskot Biru / Pink (hanya jika tidak sedang duduk di atas beanbag)
     for (const m of mascots) {
-      if (Math.abs(pt.x - m.x) < 32 + touchPad &&
-          pt.y >= m.y - 80 - touchPad &&
-          pt.y <= m.y + 10 + touchPad) {
+      if (Math.abs(pt.x - m.x) < 28 + touchPad &&
+          pt.y >= m.y - 78 - touchPad &&
+          pt.y <= m.y + 8 + touchPad) {
         m.jumpVel = -5.5;
         spawnParticles(m.x, m.y - 60, '♥', 4);
         if (isTouch) showTooltipAt(m.id === 'blue' ? 'Mochi Biru ♥' : 'Mochi Pink ♥', e.clientX, e.clientY, 1100);
         playTone(580, 'sine', 0.1, 880);
-        pushState(true);
+        pushState({
+          pingEvent: {
+            id: sessionId + '_' + Date.now(),
+            by: sessionId,
+            targetId: m.id
+          }
+        });
         return;
       }
     }
@@ -1709,7 +1792,12 @@
       }
       if (isTouch) showTooltipAt('Mochi: Meow~ ♥', e.clientX, e.clientY, 1200);
       playMeow();
-      pushState(false, true);
+      pushState({
+        catEvent: {
+          id: sessionId + '_' + Date.now(),
+          by: sessionId
+        }
+      });
       return;
     }
 
@@ -1731,24 +1819,26 @@
       }
     }
 
-    // 4. Jika user sedang mengontrol karakter (Cowo / Cewe): tap kursi meja, beanbag, kasur, atau lantai untuk berjalan!
+    // 4. Jika user sedang mengontrol karakter (Cowo / Cewe): tap beanbag, kursi meja, kasur, atau lantai!
     if (myRole !== 'auto') {
       const me = getMascot(myRole);
       if (!me) return;
+
+      // Tap beanbag -> duduk santai di beanbag!
+      const bb = roomState.decors.beanbag;
+      if (bb && Math.abs(pt.x - bb.x) <= 44 && Math.abs(pt.y - (bb.y - 32)) <= 44) {
+        commandMascotToActivity(me, 'beanbag');
+        moveIndicator = { x: bb.x + 2, y: bb.y + 4, until: Date.now() + 1200 };
+        if (isTouch) showTooltipAt('🛋️ Duduk di Beanbag', e.clientX, e.clientY, 1000);
+        playTone(540, 'sine', 0.07);
+        return;
+      }
 
       // Tap kursi / meja belajar bawah -> duduk di kursi meja!
       if (pt.x >= 460 && pt.x <= 585 && pt.y >= 345 && pt.y <= 435) {
         commandMascotToActivity(me, 'desk');
         moveIndicator = { x: 495, y: 396, until: Date.now() + 1200 };
-        playTone(520, 'sine', 0.07);
-        return;
-      }
-
-      // Tap beanbag -> santai di beanbag!
-      const bb = roomState.decors.beanbag;
-      if (bb && Math.abs(pt.x - bb.x) <= 45 && Math.abs(pt.y - (bb.y - 25)) <= 45) {
-        commandMascotToActivity(me, 'beanbag');
-        moveIndicator = { x: bb.x, y: bb.y, until: Date.now() + 1200 };
+        if (isTouch) showTooltipAt('🪑 Duduk di Kursi Meja', e.clientX, e.clientY, 1000);
         playTone(520, 'sine', 0.07);
         return;
       }
@@ -1757,6 +1847,7 @@
       if (pt.x >= 85 && pt.x <= 345 && pt.y >= 295 && pt.y <= 475) {
         commandMascotToActivity(me, 'bed');
         moveIndicator = { x: me.bedX, y: me.bedY, until: Date.now() + 1200 };
+        if (isTouch) showTooltipAt('💤 Tiduran di Kasur', e.clientX, e.clientY, 1000);
         playTone(420, 'sine', 0.08);
         return;
       }
@@ -1799,7 +1890,10 @@
         }
       }
       if (!hoverText && myRole !== 'auto') {
-        if (pt.x >= 460 && pt.x <= 585 && pt.y >= 345 && pt.y <= 435) {
+        const bb = roomState.decors.beanbag;
+        if (bb && Math.abs(pt.x - bb.x) <= 44 && Math.abs(pt.y - (bb.y - 32)) <= 44) {
+          hoverText = '🛋️ Duduk di Beanbag';
+        } else if (pt.x >= 460 && pt.x <= 585 && pt.y >= 345 && pt.y <= 435) {
           hoverText = '🪑 Duduk di Kursi Meja';
         } else if (pt.x >= 85 && pt.x <= 345 && pt.y >= 295 && pt.y <= 475) {
           hoverText = '💤 Tiduran di Kasur';
@@ -1818,11 +1912,20 @@
     if (draggingKey) {
       draggingKey = null;
       pushState();
+      if (myRole !== 'auto') {
+        const me = getMascot(myRole);
+        if (me && me.activity === 'beanbag') {
+          const spot = getActivitySpot('beanbag', me.id);
+          me.x = spot.x;
+          me.y = spot.y;
+          pushMyCharState(true);
+        }
+      }
     }
   });
 
   // =========================================================================
-  // 7. KONTROL PILIHAN KARAKTER (COWO / CEWE) & AKSI KISS / PELUK
+  // 7. KONTROL PILIHAN KARAKTER (COWO / CEWE) & AKSI KISS / PELUK / DUDUK
   // =========================================================================
   const roleChipBtn = document.getElementById('roleChipBtn');
   const rolePop = document.getElementById('rolePop');
@@ -1903,6 +2006,15 @@
     }
   });
 
+  document.getElementById('btnSitBeanbag').addEventListener('click', () => {
+    if (myRole === 'auto') return;
+    const me = getMascot(myRole);
+    if (me) {
+      commandMascotToActivity(me, 'beanbag');
+      playTone(540, 'sine', 0.07);
+    }
+  });
+
   // =========================================================================
   // 8. MODAL PORTAL 3D (KAPSUL WAKTU, PHOTOBOOTH, GAMES)
   // =========================================================================
@@ -1945,22 +2057,36 @@
   });
 
   // =========================================================================
-  // 9. KONTROL HUD ATAS (WAKTU, LAMPU, DECOR, AUDIO, TEMA)
+  // 9. KONTROL HUD ATAS (WAKTU SERVER TERSINKRONISASI, LAMPU, DECOR, AUDIO, TEMA)
   // =========================================================================
   const clockText = document.getElementById('clockText');
   const timePop = document.getElementById('timePop');
   const timeSlider = document.getElementById('timeSlider');
+  const timeModeLabel = document.getElementById('timeModeLabel');
+
+  function syncTimeControlsUI() {
+    const activeHr = getActiveHour();
+    timeSlider.value = activeHr;
+    if (timeModeLabel) {
+      timeModeLabel.textContent = roomState.manualHour === null ? 'Waktu Server (Sync)' : 'Simulasi Waktu (Sync)';
+    }
+    document.querySelectorAll('[data-hr]').forEach(b => {
+      b.classList.toggle('active', roomState.manualHour !== null && parseInt(b.dataset.hr, 10) === roomState.manualHour);
+    });
+    document.getElementById('btnAutoTime').classList.toggle('active', roomState.manualHour === null);
+    updateClockDisplay();
+  }
 
   function updateClockDisplay() {
-    if (manualHour === null) {
-      const now = new Date();
-      clockText.textContent = now.toTimeString().slice(0, 5);
+    if (roomState.manualHour === null) {
+      const { hour, minute } = getServerClockParts();
+      clockText.textContent = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
     } else {
-      clockText.textContent = String(manualHour).padStart(2, '0') + ':00';
+      clockText.textContent = String(roomState.manualHour).padStart(2, '0') + ':00';
     }
   }
   setInterval(updateClockDisplay, 1000);
-  updateClockDisplay();
+  syncTimeControlsUI();
 
   clockText.addEventListener('click', e => {
     e.stopPropagation();
@@ -1968,22 +2094,28 @@
     timePop.classList.toggle('open');
   });
   timeSlider.addEventListener('input', () => {
-    manualHour = parseInt(timeSlider.value, 10);
-    updateClockDisplay();
+    roomState.manualHour = parseInt(timeSlider.value, 10);
+    syncTimeControlsUI();
+  });
+  timeSlider.addEventListener('change', () => {
+    roomState.manualHour = parseInt(timeSlider.value, 10);
+    syncTimeControlsUI();
+    pushState();
   });
   document.querySelectorAll('[data-hr]').forEach(btn => {
     btn.addEventListener('click', () => {
-      manualHour = parseInt(btn.dataset.hr, 10);
-      timeSlider.value = manualHour;
-      updateClockDisplay();
-      document.querySelectorAll('[data-hr]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      roomState.manualHour = parseInt(btn.dataset.hr, 10);
+      syncTimeControlsUI();
+      pushState();
+      playTone(500, 'sine', 0.06);
     });
   });
   document.getElementById('btnAutoTime').addEventListener('click', () => {
-    manualHour = null;
-    updateClockDisplay();
+    roomState.manualHour = null;
+    syncTimeControlsUI();
+    pushState();
     timePop.classList.remove('open');
+    playTone(560, 'sine', 0.06);
   });
 
   function updateUIButtons() {
