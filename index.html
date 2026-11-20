@@ -739,6 +739,9 @@
     myPresence.set({
       role: myRole,
       onlineAt: firebase.database.ServerValue.TIMESTAMP
+    }).catch(err => {
+      console.warn('Firebase presence error:', err);
+      showCenterToast('Gagal sync Firebase (cek Rules database)', 2600);
     });
   }
 
@@ -767,7 +770,7 @@
     detachCurrentRoom();
     if (!db || !code) return;
 
-    roomRef = db.ref('rooms/' + code);
+    roomRef = db.ref('cozy_room_v2/rooms/' + code);
     updatePresenceInFirebase();
     if (myRole !== 'auto') pushMyCharState(true);
 
@@ -778,10 +781,12 @@
       const hasBlue = entries.some(([, v]) => v && v.role === 'blue');
       const hasPink = entries.some(([, v]) => v && v.role === 'pink');
 
+      const remoteBlue = isRoleClaimedRemotely('blue');
+      const remotePink = isRoleClaimedRemotely('pink');
       document.getElementById('dotBlue').classList.toggle('on', hasBlue || count >= 1);
       document.getElementById('dotPink').classList.toggle('on', hasPink || count >= 2);
-      document.getElementById('tagBlue').textContent = hasBlue ? '●' : '';
-      document.getElementById('tagPink').textContent = hasPink ? '●' : '';
+      document.getElementById('tagBlue').textContent = remoteBlue ? '● Dipakai' : (hasBlue ? '●' : '');
+      document.getElementById('tagPink').textContent = remotePink ? '● Dipakai' : (hasPink ? '●' : '');
 
       const presenceWrap = document.getElementById('presenceWrap');
       if (presenceWrap) {
@@ -897,7 +902,11 @@
 
       const connectedRef = db.ref('.info/connected');
       connectedRef.on('value', snap => {
-        if (snap.val() === true && currentRoom) {
+        const isConn = snap.val() === true;
+        if (currentRoom) {
+          roomStatusText.textContent = isConn ? 'Room Aktif (Sync)' : 'Menghubungkan...';
+        }
+        if (isConn && currentRoom) {
           updatePresenceInFirebase();
           if (myRole !== 'auto') pushMyCharState(true);
         }
